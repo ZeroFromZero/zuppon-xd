@@ -625,7 +625,7 @@ function cuponHTML(c, compact = false) {
             <div class="title">${c.oferta_nombre}</div>
             <div style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border-radius:20px;padding:3px 10px;font-size:0.75rem;font-weight:700;display:inline-flex;align-items:center;gap:5px">
-                    <i class="fas fa-user" style="font-size:0.65rem"></i>${c.usuario_nombre}
+                    <i class="fas fa-user" style="font-size:0.65rem"></i>${c.usuario_nombre?.startsWith('anon_') ? 'Cliente anónimo' : c.usuario_nombre}
                 </span>
                 <span style="font-size:0.78rem;color:#888"><i class="fas fa-calendar-alt me-1"></i>${c.reclamado_en ? c.reclamado_en.slice(0,16) : '-'}</span>
             </div>
@@ -720,7 +720,7 @@ async function validarCodigo() {
                     </div>
                     <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px">
                         <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-user me-1"></i>Cliente</div>
-                        <div style="font-weight:700;font-size:0.95rem">${c.usuario_nombre}</div>
+                        <div style="font-weight:700;font-size:0.95rem">${c.usuario_nombre?.startsWith('anon_') ? 'Cliente anónimo' : c.usuario_nombre}</div>
                     </div>
                     <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px">
                         <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-tag me-1"></i>Precio</div>
