@@ -245,6 +245,19 @@ function cerrarModalDirecto() {
     if (cdInterval) { clearInterval(cdInterval); cdInterval = null; }
 }
 
+async function eliminarCupon(e, id, codigo) {
+    e.stopPropagation();
+    if (!confirm(`¿Eliminar el cupón ${codigo}? Esta acción no se puede deshacer.`)) return;
+    // Eliminar del localStorage
+    const ls = JSON.parse(localStorage.getItem('mis_cupones') || '[]');
+    localStorage.setItem('mis_cupones', JSON.stringify(ls.filter(c => c.codigo !== codigo)));
+    // Eliminar de la DB si tiene id
+    if (id) {
+        try { await fetch(`/api/cupon/${id}`, { method: 'DELETE' }); } catch(e) {}
+    }
+    cargarYRenderizar();
+}
+
 async function cargarYRenderizar() {
     const grid = document.getElementById('cuponesGrid');
     const ahora = new Date();
@@ -313,6 +326,9 @@ async function cargarYRenderizar() {
                 </div>
                 <button class="cupon-btn ${c.canjeado || expirado ? 'disabled' : ''}">
                     <i class="fas fa-eye" style="margin-right:6px;"></i>Ver cupón
+                </button>
+                <button onclick="eliminarCupon(event, ${c.id}, '${c.codigo}')" style="margin-top:8px;width:100%;background:rgba(225,112,85,0.1);border:1px solid rgba(225,112,85,0.3);color:#e17055;border-radius:12px;padding:9px;font-weight:700;font-size:0.82rem;cursor:pointer;">
+                    <i class="fas fa-trash-alt" style="margin-right:6px;"></i>Eliminar
                 </button>
             </div>
         </div>`;

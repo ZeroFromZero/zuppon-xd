@@ -999,11 +999,21 @@ def reclamar_oferta():
 
 @app.route('/api/cupon/<int:cupon_id>', methods=['DELETE'])
 def eliminar_cupon(cupon_id):
-    if 'usuario_id' not in session:
+    usuario_id = session.get('usuario_id')
+    if not usuario_id:
+        anon_key = session.get('anon_key')
+        if anon_key:
+            conn = get_connection()
+            c = conn.cursor()
+            c.execute('SELECT id FROM usuarios WHERE username=?', (f"anon_{anon_key}",))
+            row = c.fetchone()
+            usuario_id = row['id'] if row else None
+            conn.close()
+    if not usuario_id:
         return jsonify({'success': False, 'message': 'No autenticado'}), 401
     conn = get_connection()
     c = conn.cursor()
-    c.execute('SELECT id FROM cupones WHERE id=? AND usuario_id=?', (cupon_id, session['usuario_id']))
+    c.execute('SELECT id FROM cupones WHERE id=? AND usuario_id=?', (cupon_id, usuario_id))
     if not c.fetchone():
         conn.close()
         return jsonify({'success': False, 'message': 'No encontrado'}), 404
