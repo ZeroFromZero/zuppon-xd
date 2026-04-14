@@ -318,12 +318,16 @@
                 <div class="code-input-group">
                     <input type="text" class="code-input" id="codigoInput" placeholder="Ej: A3F2B1C9" maxlength="8" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')validarCodigo()">
                     <button class="btn-canjear-main" onclick="validarCodigo()"><i class="fas fa-search me-2"></i>Validar</button>
-                    <label class="btn-scan" style="cursor:pointer;display:inline-flex;align-items:center">
-                        <i class="fas fa-camera me-2"></i>Escanear QR
-                        <input type="file" id="qrFileInput" accept="image/*" capture="environment" style="display:none" onchange="escanearQRDesdeImagen(this)">
-                    </label>
+                    <button class="btn-scan" id="btnScan" onclick="toggleScanner()">
+                        <i class="fas fa-camera me-2"></i><span id="btnScanText">Escanear QR</span>
+                    </button>
                 </div>
-                <canvas id="qrCanvas" style="display:none"></canvas>
+                <div id="qr-reader-container" style="display:none;margin-top:16px">
+                    <div id="qr-reader" style="border-radius:12px;overflow:hidden;width:100%"></div>
+                    <button onclick="detenerScanner()" style="margin-top:10px;width:100%;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);border-radius:10px;padding:10px;color:white;font-weight:600;cursor:pointer">
+                        <i class="fas fa-stop me-2"></i>Detener cámara
+                    </button>
+                </div>
                 <div class="canjear-result" id="canjearResult">
                     <div class="res-title" id="resTitle"></div>
                     <div class="res-detail" id="resDetail"></div>
@@ -519,7 +523,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 const NEGOCIO_ID = {{ negocio.id }};
 let todosCupones = [], todosProductos = [], todasOfertas = [];
@@ -546,7 +550,7 @@ function showTab(btn, nombre) {
     if (nombre === 'ofertas') cargarOfertas();
     if (nombre === 'pedidos') cargarPedidos();
     if (nombre === 'productos') cargarProductos();
-    if (nombre !== 'canjear' && scannerActive) stopScanner();
+    if (nombre !== 'canjear' && scannerActivo) detenerScanner();
 }
 
 // ── INIT ──────────────────────────────────────────────
@@ -803,36 +807,54 @@ function nuevoEscaneo() {
 }
 
 // ── QR SCANNER ────────────────────────────────────────
-function escanearQRDesdeImagen(input) {
-    if (!input.files || !input.files[0]) return;
-    const file = input.files[0];
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.getElementById('qrCanvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
-            input.value = ''; // reset para poder escanear de nuevo
-            if (code) {
-                const match = code.data.match(/CUPON:([A-F0-9]{8})/i);
-                if (match) {
-                    document.getElementById('codigoInput').value = match[1].toUpperCase();
-                    validarCodigo();
-                } else {
-                    mostrarResultadoError('QR no reconocido como cupón válido');
-                }
+let html5QrScanner = null;
+let scannerActivo = false;
+
+function toggleScanner() {
+    if (scannerActivo) {
+        detenerScanner();
+    } else {
+        iniciarScanner();
+    }
+}
+
+function iniciarScanner() {
+    const container = document.getElementById('qr-reader-container');
+    container.style.display = 'block';
+    document.getElementById('btnScanText').textContent = 'Detener';
+    document.getElementById('btnScan').style.background = 'rgba(225,112,85,0.3)';
+    scannerActivo = true;
+
+    html5QrScanner = new Html5Qrcode("qr-reader");
+    html5QrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+            const match = decodedText.match(/CUPON:([A-F0-9]{8})/i);
+            detenerScanner();
+            if (match) {
+                document.getElementById('codigoInput').value = match[1].toUpperCase();
+                validarCodigo();
             } else {
-                mostrarResultadoError('No se detectó ningún QR en la imagen');
+                mostrarResultadoError('QR no reconocido como cupón válido');
             }
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+        },
+        () => {} // errores de frame ignorados
+    ).catch(() => {
+        mostrarResultadoError('No se pudo acceder a la cámara. Verificá los permisos.');
+        detenerScanner();
+    });
+}
+
+function detenerScanner() {
+    if (html5QrScanner) {
+        html5QrScanner.stop().catch(() => {});
+        html5QrScanner = null;
+    }
+    document.getElementById('qr-reader-container').style.display = 'none';
+    document.getElementById('btnScanText').textContent = 'Escanear QR';
+    document.getElementById('btnScan').style.background = '';
+    scannerActivo = false;
 }
 
 function mostrarResultadoError(msg) {
