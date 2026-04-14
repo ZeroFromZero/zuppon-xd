@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+negocios.db
+database.db
+*.pem
+CREDENCIALES.txt
