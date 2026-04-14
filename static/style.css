@@ -6,14 +6,30 @@
     --card-hover:#1E1E1E;
     --surface:   #222222;
     --surface2:  #2A2A2A;
-    --accent:    #7C3AED;   /* violeta suavizado */
-    --accent2:   #DB2777;   /* rosa suavizado    */
-    --green:     #10B981;   /* verde más suave   */
+    --accent:    #7C3AED;
+    --accent2:   #DB2777;
+    --green:     #10B981;
     --text:      #F1F1F1;
-    --text-sub:  #9CA3AF;   /* gris medio        */
-    --text-dim:  #6B7280;   /* gris oscuro       */
+    --text-sub:  #9CA3AF;
+    --text-dim:  #6B7280;
     --border:    rgba(255,255,255,0.07);
     --border-md: rgba(255,255,255,0.12);
+}
+
+[data-theme="light"] {
+    --bg:        #F5F5F5;
+    --card:      #FFFFFF;
+    --card-hover:#F0F0F0;
+    --surface:   #E8E8E8;
+    --surface2:  #DEDEDE;
+    --accent:    #7C3AED;
+    --accent2:   #DB2777;
+    --green:     #059669;
+    --text:      #111111;
+    --text-sub:  #555555;
+    --text-dim:  #888888;
+    --border:    rgba(0,0,0,0.08);
+    --border-md: rgba(0,0,0,0.15);
 }
 
 body {
