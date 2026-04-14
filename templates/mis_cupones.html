@@ -260,21 +260,31 @@ async function cargarYRenderizar() {
     const grid = document.getElementById('cuponesGrid');
     const ahora = new Date();
 
-    // Cargar desde DB (sesión del servidor)
+    // 1. Migrar cupones del localStorage a la DB
+    const lsCupones = JSON.parse(localStorage.getItem('mis_cupones') || '[]');
+    if (lsCupones.length > 0) {
+        try {
+            await fetch('/api/migrar-cupones-locales', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(lsCupones)
+            });
+        } catch(e) {}
+    }
+
+    // 2. Cargar desde DB
     let dbCupones = [];
     try {
         const res = await fetch('/api/mis-cupones');
         dbCupones = await res.json();
     } catch(e) {}
 
-    // Merge con localStorage: la DB tiene prioridad, localStorage es fallback
-    const lsCupones = JSON.parse(localStorage.getItem('mis_cupones') || '[]');
+    // 3. Merge: DB tiene prioridad, localStorage como fallback para los que no llegaron
     const dbCodigos = new Set(dbCupones.map(c => c.codigo));
     const soloLS = lsCupones.filter(c => !dbCodigos.has(c.codigo));
     const todos = [...dbCupones, ...soloLS]
         .filter(c => (ahora - new Date(c.expira_en)) < 7 * 24 * 3600 * 1000);
 
-    // Sincronizar localStorage con lo que hay en DB
     localStorage.setItem('mis_cupones', JSON.stringify(todos));
 
     document.getElementById('subtitulo').textContent =
@@ -295,7 +305,6 @@ async function cargarYRenderizar() {
         const expirado = new Date(c.expira_en) < ahora;
         const estadoClass = c.canjeado ? 'canjeado' : expirado ? 'expirado' : 'activo';
         const estadoLabel = c.canjeado ? '✓ Canjeado' : expirado ? 'Expirado' : '● Activo';
-
         return `<div class="cupon-card" onclick='abrirModal(${JSON.stringify(c)})'>
             <div class="cupon-head ${estadoClass}">
                 ${c.oferta_imagen ? `<div class="cupon-head-bg" style="background-image:url('${c.oferta_imagen}')"></div><div class="cupon-head-overlay"></div>` : ''}
@@ -335,14 +344,6 @@ async function cargarYRenderizar() {
 }
 
 cargarYRenderizar();
-    const todos = JSON.parse(localStorage.getItem('mis_cupones') || '[]');
-
-    // Limpiar expirados hace más de 7 días
-    const filtrados = todos.filter(c => (ahora - new Date(c.expira_en)) < 7 * 24 * 3600 * 1000);
-    if (filtrados.length !== todos.length) localStorage.setItem('mis_cupones', JSON.stringify(filtrados));
-
-    document.getElementById('subtitulo').textContent =
-        filtrados.length === 0 ? 'No tenés cupones aún' : `${filtrados.length} cupón${filtrados.length !== 1 ? 'es' : ''}`;
 
     if (filtrados.length === 0) {
         grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">

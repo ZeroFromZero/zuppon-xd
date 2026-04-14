@@ -874,6 +874,59 @@ def api_mis_cupones():
     conn.close()
     return jsonify(cupones)
 
+@app.route('/api/migrar-cupones-locales', methods=['POST'])
+def migrar_cupones_locales():
+    cupones_ls = request.json or []
+    if not cupones_ls:
+        return jsonify({'migrados': 0})
+    usuario_id = session.get('usuario_id')
+    conn = get_connection()
+    c = conn.cursor()
+    if not usuario_id:
+        anon_key = session.get('anon_key')
+        if not anon_key:
+            anon_key = secrets.token_hex(8)
+            session['anon_key'] = anon_key
+        anon_user = f"anon_{anon_key}"
+        c.execute('SELECT id FROM usuarios WHERE username=?', (anon_user,))
+        row = c.fetchone()
+        if row:
+            usuario_id = row['id']
+        else:
+            c.execute('INSERT INTO usuarios (username, password) VALUES (?,?)', (anon_user, ''))
+            usuario_id = c.lastrowid
+        conn.commit()
+    migrados = 0
+    for cup in cupones_ls:
+        codigo = cup.get('codigo', '').upper()
+        if not codigo:
+            continue
+        c.execute('SELECT id FROM cupones WHERE codigo=?', (codigo,))
+        if c.fetchone():
+            continue
+        oferta_id = cup.get('oferta_id')
+        if not oferta_id:
+            c.execute('SELECT id FROM ofertas WHERE nombre=?', (cup.get('oferta_nombre',''),))
+            row = c.fetchone()
+            oferta_id = row['id'] if row else 1
+        c.execute('''
+            INSERT INTO cupones (usuario_id, oferta_id, negocio_nombre, oferta_nombre,
+                oferta_descripcion, precio_original, precio_oferta, codigo, qr_base64,
+                reclamado_en, expira_en, canjeado)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        ''', (
+            usuario_id, oferta_id,
+            cup.get('negocio_nombre',''), cup.get('oferta_nombre',''),
+            cup.get('oferta_descripcion',''), cup.get('precio_original',''),
+            cup.get('precio_oferta',''), codigo, cup.get('qr_base64',''),
+            cup.get('reclamado_en',''), cup.get('expira_en',''),
+            1 if cup.get('canjeado') else 0
+        ))
+        migrados += 1
+    conn.commit()
+    conn.close()
+    return jsonify({'migrados': migrados})
+
 @app.route('/api/reclamar_oferta', methods=['POST'])
 def reclamar_oferta():
     data = request.json
