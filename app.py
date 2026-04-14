@@ -842,6 +842,38 @@ def usuario_logout():
 def mis_cupones():
     return render_template('mis_cupones.html')
 
+@app.route('/api/mis-cupones')
+def api_mis_cupones():
+    usuario_id = session.get('usuario_id')
+    anon_key = session.get('anon_key')
+    if not usuario_id and not anon_key:
+        return jsonify([])
+    conn = get_connection()
+    c = conn.cursor()
+    if not usuario_id and anon_key:
+        anon_user = f"anon_{anon_key}"
+        c.execute('SELECT id FROM usuarios WHERE username=?', (anon_user,))
+        row = c.fetchone()
+        usuario_id = row['id'] if row else None
+    if not usuario_id:
+        conn.close()
+        return jsonify([])
+    c.execute('''
+        SELECT c.id, c.codigo, c.qr_base64, c.negocio_nombre, c.oferta_nombre,
+               c.oferta_descripcion, c.precio_original, c.precio_oferta,
+               c.reclamado_en, c.expira_en, c.canjeado, c.oferta_id,
+               n.whatsapp as negocio_whatsapp,
+               o.imagen as oferta_imagen
+        FROM cupones c
+        JOIN ofertas o ON c.oferta_id = o.id
+        JOIN negocios n ON o.negocio_id = n.id
+        WHERE c.usuario_id = ?
+        ORDER BY c.reclamado_en DESC
+    ''', (usuario_id,))
+    cupones = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return jsonify(cupones)
+
 @app.route('/api/reclamar_oferta', methods=['POST'])
 def reclamar_oferta():
     data = request.json

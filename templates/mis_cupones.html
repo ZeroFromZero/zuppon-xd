@@ -256,9 +256,85 @@ function cerrarModalDirecto() {
     if (cdInterval) { clearInterval(cdInterval); cdInterval = null; }
 }
 
-function renderCupones() {
+async function cargarYRenderizar() {
     const grid = document.getElementById('cuponesGrid');
     const ahora = new Date();
+
+    // Cargar desde DB (sesión del servidor)
+    let dbCupones = [];
+    try {
+        const res = await fetch('/api/mis-cupones');
+        dbCupones = await res.json();
+    } catch(e) {}
+
+    // Merge con localStorage: la DB tiene prioridad, localStorage es fallback
+    const lsCupones = JSON.parse(localStorage.getItem('mis_cupones') || '[]');
+    const dbCodigos = new Set(dbCupones.map(c => c.codigo));
+    const soloLS = lsCupones.filter(c => !dbCodigos.has(c.codigo));
+    const todos = [...dbCupones, ...soloLS]
+        .filter(c => (ahora - new Date(c.expira_en)) < 7 * 24 * 3600 * 1000);
+
+    // Sincronizar localStorage con lo que hay en DB
+    localStorage.setItem('mis_cupones', JSON.stringify(todos));
+
+    document.getElementById('subtitulo').textContent =
+        todos.length === 0 ? 'No tenés cupones aún' : `${todos.length} cupón${todos.length !== 1 ? 'es' : ''}`;
+
+    if (todos.length === 0) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+            <div class="icon">🎟️</div>
+            <p>Todavía no reclamaste ningún cupón</p>
+            <a href="/" style="background:var(--accent);color:white;border-radius:12px;padding:10px 24px;text-decoration:none;font-weight:700;font-size:0.85rem;">
+                Ver ofertas
+            </a>
+        </div>`;
+        return;
+    }
+
+    grid.innerHTML = todos.map((c, i) => {
+        const expirado = new Date(c.expira_en) < ahora;
+        const estadoClass = c.canjeado ? 'canjeado' : expirado ? 'expirado' : 'activo';
+        const estadoLabel = c.canjeado ? '✓ Canjeado' : expirado ? 'Expirado' : '● Activo';
+
+        return `<div class="cupon-card" onclick='abrirModal(${JSON.stringify(c)})'>
+            <div class="cupon-head ${estadoClass}">
+                ${c.oferta_imagen ? `<div class="cupon-head-bg" style="background-image:url('${c.oferta_imagen}')"></div><div class="cupon-head-overlay"></div>` : ''}
+                <div class="cupon-negocio">${c.negocio_nombre}</div>
+                <div class="cupon-nombre">${c.oferta_nombre}</div>
+                <span class="cupon-estado ${estadoClass}">${estadoLabel}</span>
+            </div>
+            <div class="cupon-divider">
+                <div class="cupon-notch"></div>
+                <div class="cupon-dash"></div>
+                <div class="cupon-notch"></div>
+            </div>
+            <div class="cupon-body">
+                <div class="cupon-codigo">${c.codigo}</div>
+                <div class="cupon-precios">
+                    ${c.precio_original ? `<span class="cupon-original">${c.precio_original}</span>` : ''}
+                    <span class="cupon-oferta">${c.precio_oferta}</span>
+                </div>
+                <div class="cupon-tiempo" id="cd-${i}">
+                    <i class="fas fa-clock" style="margin-right:4px;"></i>${fmtTiempo(c.expira_en)}
+                </div>
+                <button class="cupon-btn ${c.canjeado || expirado ? 'disabled' : ''}">
+                    <i class="fas fa-eye" style="margin-right:6px;"></i>Ver cupón
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+
+    todos.forEach((c, i) => {
+        if (!c.canjeado && new Date(c.expira_en) > ahora) {
+            setInterval(() => {
+                const el = document.getElementById(`cd-${i}`);
+                if (el) el.innerHTML = `<i class="fas fa-clock" style="margin-right:4px;"></i>${fmtTiempo(c.expira_en)}`;
+            }, 1000);
+        }
+    });
+}
+
+cargarYRenderizar();
     const todos = JSON.parse(localStorage.getItem('mis_cupones') || '[]');
 
     // Limpiar expirados hace más de 7 días
