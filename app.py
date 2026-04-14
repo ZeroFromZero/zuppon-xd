@@ -932,7 +932,6 @@ def reclamar_oferta():
     data = request.json
     oferta_id = data.get('oferta_id')
     conn = get_connection()
-    conn.isolation_level = 'EXCLUSIVE'
     c = conn.cursor()
     c.execute('SELECT o.*, n.nombre as negocio_nombre, n.whatsapp FROM ofertas o JOIN negocios n ON o.negocio_id=n.id WHERE o.id=?', (oferta_id,))
     oferta = c.fetchone()
@@ -948,6 +947,7 @@ def reclamar_oferta():
         if not anon_key:
             anon_key = secrets.token_hex(8)
             session['anon_key'] = anon_key
+            session.modified = True
         anon_user = f"anon_{anon_key}"
         c.execute('SELECT id FROM usuarios WHERE username=?', (anon_user,))
         row = c.fetchone()
@@ -955,6 +955,7 @@ def reclamar_oferta():
             usuario_id = row['id']
         else:
             c.execute('INSERT INTO usuarios (username, password) VALUES (?,?)', (anon_user, ''))
+            conn.commit()
             usuario_id = c.lastrowid
 
     codigo = secrets.token_hex(4).upper()
@@ -1010,6 +1011,15 @@ def eliminar_cupon(cupon_id):
     conn.commit()
     conn.close()
     return jsonify({'success': True})
+
+@app.route('/api/debug-cupon', methods=['GET'])
+def debug_cupon():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT id, codigo, negocio_nombre, oferta_nombre, canjeado, reclamado_en FROM cupones ORDER BY id DESC LIMIT 10')
+    rows = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return jsonify({'total_en_db': len(rows), 'ultimos': rows, 'session': dict(session)})
 
 if __name__ == '__main__':
     import socket
