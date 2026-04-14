@@ -855,15 +855,46 @@ def reclamar_oferta():
         conn.close()
         return jsonify({'success': False, 'message': 'Oferta no encontrada'}), 404
     oferta_dict = dict(oferta)
+
+    # Obtener o crear usuario anónimo si no está logueado
+    usuario_id = session.get('usuario_id')
+    if not usuario_id:
+        anon_key = session.get('anon_key')
+        if not anon_key:
+            anon_key = secrets.token_hex(8)
+            session['anon_key'] = anon_key
+        anon_user = f"anon_{anon_key}"
+        c.execute('SELECT id FROM usuarios WHERE username=?', (anon_user,))
+        row = c.fetchone()
+        if row:
+            usuario_id = row['id']
+        else:
+            c.execute('INSERT INTO usuarios (username, password) VALUES (?,?)', (anon_user, ''))
+            usuario_id = c.lastrowid
+
     codigo = secrets.token_hex(4).upper()
     expira_en = (datetime.now() + timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S')
-    qr_data = f"CUPON:{codigo}|OFERTA:{oferta_dict['nombre']}|NEGOCIO:{oferta_dict['negocio_nombre']}|PRECIO:{oferta_dict['precio_oferta']}|EXPIRA:{expira_en}"
+    ahora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    qr_data = f"CUPON:{codigo}"
     qr_img = qrcode.make(qr_data)
     buf = io.BytesIO()
     qr_img.save(buf, format='PNG')
     qr_b64 = base64.b64encode(buf.getvalue()).decode()
+
+    c.execute('''
+        INSERT INTO cupones (usuario_id, oferta_id, negocio_nombre, oferta_nombre,
+            oferta_descripcion, precio_original, precio_oferta, codigo, qr_base64,
+            reclamado_en, expira_en, canjeado)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,0)
+    ''', (usuario_id, oferta_id, oferta_dict['negocio_nombre'], oferta_dict['nombre'],
+          oferta_dict.get('descripcion') or '', oferta_dict['precio_original'],
+          oferta_dict['precio_oferta'], codigo, qr_b64, ahora, expira_en))
+    cupon_id = c.lastrowid
+    conn.commit()
     conn.close()
+
     cupon = {
+        'id': cupon_id,
         'codigo': codigo,
         'qr_base64': qr_b64,
         'negocio_nombre': oferta_dict['negocio_nombre'],
@@ -873,7 +904,7 @@ def reclamar_oferta():
         'precio_original': oferta_dict['precio_original'],
         'precio_oferta': oferta_dict['precio_oferta'],
         'oferta_imagen': oferta_dict.get('imagen') or '',
-        'reclamado_en': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'reclamado_en': ahora,
         'expira_en': expira_en,
         'canjeado': 0,
         'oferta_id': oferta_id
