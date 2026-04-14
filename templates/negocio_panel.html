@@ -829,17 +829,16 @@ function iniciarScanner() {
     html5QrScanner.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
+        async (decodedText) => {
             const match = decodedText.match(/CUPON:([A-F0-9]{8})/i);
             detenerScanner();
-            if (match) {
-                document.getElementById('codigoInput').value = match[1].toUpperCase();
-                validarCodigo();
-            } else {
-                mostrarResultadoError('QR no reconocido como cupón válido');
+            if (!match) {
+                mostrarResultadoError('QR no reconocido — no es un cupón ZupponPy');
+                return;
             }
+            await validarYCanjearDirecto(match[1].toUpperCase());
         },
-        () => {} // errores de frame ignorados
+        () => {}
     ).catch(() => {
         mostrarResultadoError('No se pudo acceder a la cámara. Verificá los permisos.');
         detenerScanner();
@@ -863,7 +862,105 @@ function mostrarResultadoError(msg) {
     result.className = 'canjear-result error';
     document.getElementById('resTitle').innerHTML = `<i class="fas fa-times-circle me-2" style="color:#e17055"></i>${msg}`;
     document.getElementById('resDetail').innerHTML = '';
-    document.getElementById('resActions').innerHTML = '';
+    document.getElementById('resActions').innerHTML = `<button class="btn-scan mt-2" onclick="nuevoEscaneo()"><i class="fas fa-redo me-2"></i>Escanear otro</button>`;
+}
+
+async function validarYCanjearDirecto(codigo) {
+    const result = document.getElementById('canjearResult');
+    const resTitle = document.getElementById('resTitle');
+    const resDetail = document.getElementById('resDetail');
+    const resActions = document.getElementById('resActions');
+
+    result.style.display = 'block';
+    result.className = 'canjear-result success';
+    resTitle.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>Validando cupón...`;
+    resDetail.innerHTML = ''; resActions.innerHTML = '';
+
+    // 1. Validar
+    let data;
+    try {
+        const res = await fetch(`/api/validar-cupon/${NEGOCIO_ID}/${codigo}`);
+        data = await res.json();
+    } catch(e) {
+        mostrarResultadoError('Error de conexión al validar');
+        return;
+    }
+
+    if (!data.valido) {
+        // Mostrar motivo específico del rechazo
+        result.className = 'canjear-result error';
+        const iconos = {
+            'Código no encontrado': 'fa-search',
+            'Este cupón ya fue canjeado': 'fa-ban',
+            'Este cupón está expirado': 'fa-calendar-times',
+        };
+        const icono = iconos[data.mensaje] || 'fa-times-circle';
+        resTitle.innerHTML = `<i class="fas ${icono} me-2" style="color:#e17055"></i>${data.mensaje}`;
+        resDetail.innerHTML = `
+            <div style="margin-top:12px;font-size:0.82rem;color:rgba(255,255,255,0.5)">
+                Código escaneado: <span style="font-family:monospace;color:rgba(255,255,255,0.8)">${codigo}</span>
+            </div>`;
+        resActions.innerHTML = `<button class="btn-scan mt-2" onclick="nuevoEscaneo()"><i class="fas fa-redo me-2"></i>Escanear otro</button>`;
+        return;
+    }
+
+    // 2. Canjear automáticamente
+    const c = data.cupon;
+    resTitle.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>Canjeando...`;
+
+    let canje;
+    try {
+        const res2 = await fetch(`/api/cupon/${c.id}/canjear`, { method: 'POST' });
+        canje = await res2.json();
+    } catch(e) {
+        mostrarResultadoError('Error de conexión al canjear');
+        return;
+    }
+
+    if (!canje.success) {
+        mostrarResultadoError(canje.error || 'No se pudo canjear');
+        return;
+    }
+
+    // 3. Mostrar resultado exitoso con todos los detalles
+    const expira = new Date(c.expira_en.replace(' ', 'T'));
+    const reclamado = new Date((c.reclamado_en || '').replace(' ', 'T'));
+    const ahora = new Date();
+    const minutosDesdeReclamo = Math.floor((ahora - reclamado) / 60000);
+    const tiempoReclamo = minutosDesdeReclamo < 60
+        ? `hace ${minutosDesdeReclamo} min`
+        : `hace ${Math.floor(minutosDesdeReclamo/60)}h`;
+
+    result.className = 'canjear-result success';
+    resTitle.innerHTML = `<i class="fas fa-check-circle me-2" style="color:#00b894;font-size:1.4rem"></i>¡Cupón canjeado exitosamente!`;
+    resDetail.innerHTML = `
+        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px;grid-column:1/-1">
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-ticket-alt me-1"></i>Oferta canjeada</div>
+                <div style="font-weight:800;font-size:1.05rem">${c.oferta_nombre}</div>
+            </div>
+            <div style="background:rgba(0,184,148,0.12);border:1px solid rgba(0,184,148,0.3);border-radius:10px;padding:12px">
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-tag me-1"></i>Precio oferta</div>
+                <div>
+                    ${c.precio_original ? `<span style="text-decoration:line-through;color:rgba(255,255,255,0.35);font-size:0.8rem;margin-right:6px">${c.precio_original}</span>` : ''}
+                    <span style="font-weight:800;font-size:1.1rem;color:#00b894">${c.precio_oferta}</span>
+                </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-calendar-check me-1"></i>Reclamado</div>
+                <div style="font-weight:600;font-size:0.85rem">${tiempoReclamo}</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-barcode me-1"></i>Código</div>
+                <div style="font-family:monospace;font-weight:800;font-size:1rem;letter-spacing:3px">${codigo}</div>
+            </div>
+        </div>
+        <div style="margin-top:12px;padding:10px 14px;background:rgba(0,184,148,0.1);border-radius:10px;font-size:0.8rem;color:rgba(255,255,255,0.6)">
+            <i class="fas fa-shield-alt me-1" style="color:#00b894"></i>
+            Validaciones: código auténtico · no canjeado previamente · dentro del período de validez
+        </div>`;
+    resActions.innerHTML = `<button class="btn-scan mt-3" style="width:100%" onclick="nuevoEscaneo()"><i class="fas fa-qrcode me-2"></i>Escanear siguiente</button>`;
+    cargarCupones();
 }
 </script>
 

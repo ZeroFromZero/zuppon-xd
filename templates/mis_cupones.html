@@ -197,20 +197,16 @@ function fmtTiempo(expira_en) {
     return `${h}h ${m}m restantes`;
 }
 
-let cuponActual = null;
 let cdInterval = null;
 
 function abrirModal(cupon) {
-    cuponActual = cupon;
     const ahora = new Date();
     const expirado = new Date(cupon.expira_en) < ahora;
     const estadoLabel = cupon.canjeado ? '✓ Canjeado' : expirado ? 'Expirado' : '● Activo';
     const estadoColor = cupon.canjeado ? '#34D399' : expirado ? 'var(--text-dim)' : '#A78BFA';
     const estadoBg    = cupon.canjeado ? 'rgba(16,185,129,0.15)' : expirado ? 'rgba(255,255,255,0.05)' : 'rgba(124,58,237,0.15)';
-
     const waMsg = encodeURIComponent(`🎟️ Mi cupón: ${cupon.oferta_nombre}\nCódigo: ${cupon.codigo}\nPrecio: ${cupon.precio_oferta}`);
     const waUrl = cupon.negocio_whatsapp ? `https://wa.me/${cupon.negocio_whatsapp}?text=${waMsg}` : null;
-
     document.getElementById('modalBody').innerHTML = `
         <div class="modal-negocio">${cupon.negocio_nombre}</div>
         <div class="modal-nombre">${cupon.oferta_nombre}</div>
@@ -225,19 +221,13 @@ function abrirModal(cupon) {
         </div>
         <span class="modal-estado-badge" style="background:${estadoBg};color:${estadoColor};border:1px solid ${estadoColor}33;">
             ${estadoLabel}
-        </span>
-    `;
-
+        </span>`;
     document.getElementById('modalFooter').innerHTML = `
         ${waUrl && !cupon.canjeado && !expirado
             ? `<a href="${waUrl}" target="_blank" class="modal-wa-btn"><i class="fab fa-whatsapp" style="margin-right:6px;"></i>Presentar en WhatsApp</a>`
             : ''}
-        <button class="modal-close-btn" onclick="cerrarModalDirecto()">Cerrar</button>
-    `;
-
+        <button class="modal-close-btn" onclick="cerrarModalDirecto()">Cerrar</button>`;
     document.getElementById('modalOverlay').classList.add('open');
-
-    // Countdown en vivo dentro del modal
     if (cdInterval) clearInterval(cdInterval);
     if (!expirado && !cupon.canjeado) {
         cdInterval = setInterval(() => {
@@ -250,7 +240,6 @@ function abrirModal(cupon) {
 function cerrarModal(e) {
     if (e.target === document.getElementById('modalOverlay')) cerrarModalDirecto();
 }
-
 function cerrarModalDirecto() {
     document.getElementById('modalOverlay').classList.remove('open');
     if (cdInterval) { clearInterval(cdInterval); cdInterval = null; }
@@ -260,7 +249,7 @@ async function cargarYRenderizar() {
     const grid = document.getElementById('cuponesGrid');
     const ahora = new Date();
 
-    // 1. Migrar cupones del localStorage a la DB
+    // 1. Migrar localStorage → DB
     const lsCupones = JSON.parse(localStorage.getItem('mis_cupones') || '[]');
     if (lsCupones.length > 0) {
         try {
@@ -279,7 +268,7 @@ async function cargarYRenderizar() {
         dbCupones = await res.json();
     } catch(e) {}
 
-    // 3. Merge: DB tiene prioridad, localStorage como fallback para los que no llegaron
+    // 3. Merge: DB primero, localStorage como fallback
     const dbCodigos = new Set(dbCupones.map(c => c.codigo));
     const soloLS = lsCupones.filter(c => !dbCodigos.has(c.codigo));
     const todos = [...dbCupones, ...soloLS]
@@ -294,9 +283,7 @@ async function cargarYRenderizar() {
         grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
             <div class="icon">🎟️</div>
             <p>Todavía no reclamaste ningún cupón</p>
-            <a href="/" style="background:var(--accent);color:white;border-radius:12px;padding:10px 24px;text-decoration:none;font-weight:700;font-size:0.85rem;">
-                Ver ofertas
-            </a>
+            <a href="/" style="background:var(--accent);color:white;border-radius:12px;padding:10px 24px;text-decoration:none;font-weight:700;font-size:0.85rem;">Ver ofertas</a>
         </div>`;
         return;
     }
@@ -313,9 +300,7 @@ async function cargarYRenderizar() {
                 <span class="cupon-estado ${estadoClass}">${estadoLabel}</span>
             </div>
             <div class="cupon-divider">
-                <div class="cupon-notch"></div>
-                <div class="cupon-dash"></div>
-                <div class="cupon-notch"></div>
+                <div class="cupon-notch"></div><div class="cupon-dash"></div><div class="cupon-notch"></div>
             </div>
             <div class="cupon-body">
                 <div class="cupon-codigo">${c.codigo}</div>
@@ -344,63 +329,6 @@ async function cargarYRenderizar() {
 }
 
 cargarYRenderizar();
-
-    if (filtrados.length === 0) {
-        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-            <div class="icon">🎟️</div>
-            <p>Todavía no reclamaste ningún cupón</p>
-            <a href="/" style="background:var(--accent);color:white;border-radius:12px;padding:10px 24px;text-decoration:none;font-weight:700;font-size:0.85rem;">
-                Ver ofertas
-            </a>
-        </div>`;
-        return;
-    }
-
-    grid.innerHTML = filtrados.map((c, i) => {
-        const expirado = new Date(c.expira_en) < ahora;
-        const estadoClass = c.canjeado ? 'canjeado' : expirado ? 'expirado' : 'activo';
-        const estadoLabel = c.canjeado ? '✓ Canjeado' : expirado ? 'Expirado' : '● Activo';
-
-        return `<div class="cupon-card" onclick='abrirModal(${JSON.stringify(c)})'>
-            <div class="cupon-head ${estadoClass}">
-                ${c.oferta_imagen ? `<div class="cupon-head-bg" style="background-image:url('${c.oferta_imagen}')"></div><div class="cupon-head-overlay"></div>` : ''}
-                <div class="cupon-negocio">${c.negocio_nombre}</div>
-                <div class="cupon-nombre">${c.oferta_nombre}</div>
-                <span class="cupon-estado ${estadoClass}">${estadoLabel}</span>
-            </div>
-            <div class="cupon-divider">
-                <div class="cupon-notch"></div>
-                <div class="cupon-dash"></div>
-                <div class="cupon-notch"></div>
-            </div>
-            <div class="cupon-body">
-                <div class="cupon-codigo">${c.codigo}</div>
-                <div class="cupon-precios">
-                    ${c.precio_original ? `<span class="cupon-original">${c.precio_original}</span>` : ''}
-                    <span class="cupon-oferta">${c.precio_oferta}</span>
-                </div>
-                <div class="cupon-tiempo" id="cd-${i}">
-                    <i class="fas fa-clock" style="margin-right:4px;"></i>${fmtTiempo(c.expira_en)}
-                </div>
-                <button class="cupon-btn ${c.canjeado || expirado ? 'disabled' : ''}">
-                    <i class="fas fa-eye" style="margin-right:6px;"></i>Ver cupón
-                </button>
-            </div>
-        </div>`;
-    }).join('');
-
-    // Countdown en las cards
-    filtrados.forEach((c, i) => {
-        if (!c.canjeado && new Date(c.expira_en) > ahora) {
-            setInterval(() => {
-                const el = document.getElementById(`cd-${i}`);
-                if (el) el.innerHTML = `<i class="fas fa-clock" style="margin-right:4px;"></i>${fmtTiempo(c.expira_en)}`;
-            }, 1000);
-        }
-    });
-}
-
-renderCupones();
 </script>
 </body>
 </html>
