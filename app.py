@@ -3,6 +3,10 @@ from datetime import datetime, timedelta
 import json, secrets, io, base64, re
 import urllib.request
 import qrcode
+from qrcode.image.styledpil import StyledPilImage
+from qrcode.image.styles.moduledrawers import RoundedModuleDrawer, GappedSquareModuleDrawer
+from qrcode.image.styles.colormasks import RadialGradiantColorMask
+from PIL import Image, ImageDraw
 from database import init_db, get_connection, insertar_negocios_ejemplo, hash_password, verify_password, generate_credentials
 
 app = Flask(__name__)
@@ -874,6 +878,57 @@ def api_mis_cupones():
     conn.close()
     return jsonify(cupones)
 
+def generar_qr_bonito(data):
+    """Genera QR con módulos redondeados, gradiente violeta y logo Zuppon en el centro."""
+    qr = qrcode.QRCode(
+        version=3,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=12,
+        border=2,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+
+    qr_img = qr.make_image(
+        image_factory=StyledPilImage,
+        module_drawer=RoundedModuleDrawer(),
+        color_mask=RadialGradiantColorMask(
+            back_color=(255, 255, 255),
+            center_color=(90, 30, 180),
+            edge_color=(124, 58, 237),
+        )
+    ).convert('RGBA')
+
+    # Intentar poner el logo Zuppon en el centro
+    try:
+        logo_path = 'static/zuppon logo.png'
+        logo = Image.open(logo_path).convert('RGBA')
+        qr_w, qr_h = qr_img.size
+        logo_size = int(qr_w * 0.22)
+        logo = logo.resize((logo_size, logo_size), Image.LANCZOS)
+
+        # Fondo blanco circular para el logo
+        bg_size = logo_size + 16
+        bg = Image.new('RGBA', (bg_size, bg_size), (255, 255, 255, 255))
+        mask = Image.new('L', (bg_size, bg_size), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, bg_size, bg_size), fill=255)
+        bg.putalpha(mask)
+
+        # Centrar logo en el fondo
+        logo_pos = ((bg_size - logo_size) // 2, (bg_size - logo_size) // 2)
+        bg.paste(logo, logo_pos, logo)
+
+        # Pegar en el QR
+        pos = ((qr_w - bg_size) // 2, (qr_h - bg_size) // 2)
+        qr_img.paste(bg, pos, bg)
+    except Exception:
+        pass  # Si falla el logo, el QR igual se genera
+
+    buf = io.BytesIO()
+    qr_img.save(buf, format='PNG')
+    return base64.b64encode(buf.getvalue()).decode()
+
+
 @app.route('/api/migrar-cupones-locales', methods=['POST'])
 def migrar_cupones_locales():
     cupones_ls = request.json or []
@@ -962,10 +1017,7 @@ def reclamar_oferta():
     expira_en = (datetime.now() + timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S')
     ahora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     qr_data = f"CUPON:{codigo}"
-    qr_img = qrcode.make(qr_data)
-    buf = io.BytesIO()
-    qr_img.save(buf, format='PNG')
-    qr_b64 = base64.b64encode(buf.getvalue()).decode()
+    qr_b64 = generar_qr_bonito(qr_data)
 
     c.execute('''
         INSERT INTO cupones (usuario_id, oferta_id, negocio_nombre, oferta_nombre,
