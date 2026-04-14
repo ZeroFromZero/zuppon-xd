@@ -1,0 +1,86 @@
+================================================================================
+CREDENCIALES DE ACCESO - PANEL DE NEGOCIOS
+================================================================================
+
+Servidor: http://localhost:5000/login
+
+NEGOCIO: Academia de Danza Ritmo Vida
+  Usuario:     academia_de_danza_ri_2382
+  Contraseña:  DJQ57deu
+--------------------------------------------------------------------------------
+NEGOCIO: Boutique Fashion "Elegancia"
+  Usuario:     boutique_fashion_ele_3444
+  Contraseña:  kF357rlB
+--------------------------------------------------------------------------------
+NEGOCIO: Café Aroma Gourmet
+  Usuario:     cafe_aroma_gourmet_6420
+  Contraseña:  pizaPXUz
+--------------------------------------------------------------------------------
+NEGOCIO: Cappuccino Express
+  Usuario:     cappuccino_express_3779
+  Contraseña:  nmPGPN4L
+--------------------------------------------------------------------------------
+NEGOCIO: Cine VIP Premium
+  Usuario:     cine_vip_premium_9254
+  Contraseña:  zTfVO0sd
+--------------------------------------------------------------------------------
+NEGOCIO: Consultorio Dental Smile Plus
+  Usuario:     consultorio_dental_s_4732
+  Contraseña:  Qi4R6VFz
+--------------------------------------------------------------------------------
+NEGOCIO: CrossFit Max
+  Usuario:     crossfit_max_8103
+  Contraseña:  sqH4taHB
+--------------------------------------------------------------------------------
+NEGOCIO: Galería de Arte "Contempo"
+  Usuario:     galeria_de_arte_cont_1160
+  Contraseña:  Ev7DgXrp
+--------------------------------------------------------------------------------
+NEGOCIO: Gym Fitness Pro Elite
+  Usuario:     gym_fitness_pro_elit_0738
+  Contraseña:  5LdiHOP2
+--------------------------------------------------------------------------------
+NEGOCIO: Hostal Viajero Amiga
+  Usuario:     hostal_viajero_amiga_3250
+  Contraseña:  3QrLkcQr
+--------------------------------------------------------------------------------
+NEGOCIO: Hotel Boutique "Casa Magica"
+  Usuario:     hotel_boutique_casa_0996
+  Contraseña:  CCEQ33Db
+--------------------------------------------------------------------------------
+NEGOCIO: Librería Cultural Plus
+  Usuario:     libreria_cultural_pl_0595
+  Contraseña:  eDJPeoql
+--------------------------------------------------------------------------------
+NEGOCIO: Parque Temático "Aventura Total"
+  Usuario:     parque_tematico_aven_2165
+  Contraseña:  qTAA9VK1
+--------------------------------------------------------------------------------
+NEGOCIO: Peluquería Barbería Vintage
+  Usuario:     peluqueria_barberia_4992
+  Contraseña:  lDvyiLyA
+--------------------------------------------------------------------------------
+NEGOCIO: Pizzería Napoli Auténtica
+  Usuario:     pizzeria_napoli_aute_1952
+  Contraseña:  EaBGICAz
+--------------------------------------------------------------------------------
+NEGOCIO: Restaurante El Sabor Mexicano
+  Usuario:     restaurante_el_sabor_3735
+  Contraseña:  qYEKnLy2
+--------------------------------------------------------------------------------
+NEGOCIO: Salón de Belleza "La Corona"
+  Usuario:     salon_de_belleza_la_9174
+  Contraseña:  TX8PBAC0
+--------------------------------------------------------------------------------
+NEGOCIO: Spa Relax Luxury
+  Usuario:     spa_relax_luxury_8922
+  Contraseña:  nwGAovOT
+--------------------------------------------------------------------------------
+NEGOCIO: Steakhouse Prime Cuts
+  Usuario:     steakhouse_prime_cut_2708
+  Contraseña:  XoMLw9CY
+--------------------------------------------------------------------------------
+NEGOCIO: Sushi Paradise
+  Usuario:     sushi_paradise_4792
+  Contraseña:  UT1nazQ0
+--------------------------------------------------------------------------------

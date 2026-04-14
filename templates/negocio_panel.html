@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel — {{ negocio.nombre }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary2: #764ba2;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #e17055;
+            --dark: #2d3436;
+            --light-bg: #f7f8fc;
+            --card-shadow: 0 4px 24px rgba(102,126,234,0.10);
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--light-bg); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed; top: 0; left: 0; height: 100vh; width: 240px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+            z-index: 100; display: flex; flex-direction: column;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+            transition: transform 0.3s;
+        }
+        .sidebar-logo {
+            padding: 28px 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .sidebar-logo .biz-name { color: white; font-weight: 800; font-size: 1rem; line-height: 1.3; }
+        .sidebar-logo .biz-cat { color: rgba(255,255,255,0.45); font-size: 0.78rem; margin-top: 2px; }
+        .sidebar-logo .avatar {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--primary2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; color: white; margin-bottom: 10px;
+        }
+        .nav-section { padding: 16px 12px 4px; color: rgba(255,255,255,0.3); font-size: 0.68rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 16px; margin: 2px 8px; border-radius: 10px;
+            color: rgba(255,255,255,0.6); font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; border: none; background: none; width: calc(100% - 16px); text-align: left;
+        }
+        .nav-item i { width: 18px; text-align: center; font-size: 0.95rem; }
+        .nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, var(--primary), var(--primary2)); color: white; box-shadow: 0 4px 14px rgba(102,126,234,0.4); }
+        .nav-item .badge-count { margin-left: auto; background: var(--danger); color: white; border-radius: 20px; padding: 1px 7px; font-size: 0.72rem; }
+        .sidebar-footer { margin-top: auto; padding: 16px 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+
+        /* MAIN */
+        .main { margin-left: 240px; min-height: 100vh; }
+        .topbar {
+            background: white; padding: 16px 32px;
+            border-bottom: 1px solid #eef0f7;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04); position: sticky; top: 0; z-index: 50;
+        }
+        .topbar-title { font-size: 1.25rem; font-weight: 800; color: var(--dark); }
+        .topbar-sub { font-size: 0.8rem; color: #aaa; margin-top: 1px; }
+        .content { padding: 28px 32px; }
+
+        /* STATS */
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+        .stat-card {
+            background: white; border-radius: 16px; padding: 20px 22px;
+            box-shadow: var(--card-shadow); position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: var(--accent, var(--primary));
+        }
+        .stat-card .icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; margin-bottom: 12px;
+            background: var(--icon-bg, #eef0ff); color: var(--accent, var(--primary));
+        }
+        .stat-card .num { font-size: 2rem; font-weight: 900; color: var(--dark); line-height: 1; }
+        .stat-card .lbl { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+        /* PANEL CARD */
+        .panel-card { background: white; border-radius: 18px; box-shadow: var(--card-shadow); overflow: hidden; }
+        .panel-card-header { padding: 20px 24px; border-bottom: 1px solid #f0f2f8; display: flex; align-items: center; justify-content: space-between; }
+        .panel-card-header h5 { margin: 0; font-weight: 800; font-size: 1rem; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+        .panel-card-body { padding: 24px; }
+
+        /* CUPONES */
+        .cupon-item {
+            border: 1.5px solid #eef0f7; border-radius: 14px; padding: 16px 18px;
+            margin-bottom: 10px; display: flex; align-items: center; gap: 16px;
+            transition: all 0.2s; background: white;
+        }
+        .cupon-item:hover { border-color: var(--primary); box-shadow: 0 4px 16px rgba(102,126,234,0.12); }
+        .cupon-item.canjeado { background: #f8fff9; border-color: #b2dfdb; opacity: 0.75; }
+        .cupon-item.expirado { background: #fafafa; border-color: #e0e0e0; opacity: 0.6; }
+        .cupon-code-box {
+            background: linear-gradient(135deg, #f7f8fc, #eef0ff);
+            border: 1.5px dashed var(--primary); border-radius: 10px;
+            padding: 8px 14px; font-family: 'Courier New', monospace;
+            font-size: 1.1rem; font-weight: 900; letter-spacing: 5px;
+            color: var(--primary); white-space: nowrap; min-width: 140px; text-align: center;
+        }
+        .cupon-info { flex: 1; min-width: 0; }
+        .cupon-info .title { font-weight: 700; font-size: 0.95rem; color: var(--dark); }
+        .cupon-info .sub { font-size: 0.8rem; color: #999; margin-top: 2px; }
+        .cupon-price-orig { text-decoration: line-through; color: #bbb; font-size: 0.85rem; margin-right: 6px; }
+        .cupon-price-new { color: var(--success); font-weight: 800; font-size: 1rem; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+        /* CANJEAR PANEL */
+        .canjear-panel {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 18px; padding: 28px; color: white; margin-bottom: 20px;
+        }
+        .canjear-panel h5 { font-weight: 800; font-size: 1.1rem; margin-bottom: 6px; }
+        .canjear-panel p { color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-bottom: 20px; }
+        .code-input-group { display: flex; gap: 10px; }
+        .code-input {
+            flex: 1; background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.2);
+            border-radius: 12px; padding: 12px 18px; color: white; font-family: monospace;
+            font-size: 1.2rem; font-weight: 700; letter-spacing: 4px; text-transform: uppercase;
+            outline: none; transition: border-color 0.2s;
+        }
+        .code-input::placeholder { color: rgba(255,255,255,0.3); letter-spacing: 2px; font-size: 0.95rem; }
+        .code-input:focus { border-color: var(--primary); }
+        .btn-canjear-main {
+            background: linear-gradient(135deg, var(--primary), var(--primary2));
+            border: none; border-radius: 12px; padding: 12px 24px;
+            color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .btn-canjear-main:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102,126,234,0.4); }
+        .btn-scan {
+            background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.2);
+            border-radius: 12px; padding: 12px 18px; color: white; font-weight: 600;
+            font-size: 0.9rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .btn-scan:hover { background: rgba(255,255,255,0.2); }
+        #qr-reader { border-radius: 12px; overflow: hidden; margin-top: 16px; }
+        .canjear-result {
+            margin-top: 16px; border-radius: 12px; padding: 16px 18px;
+            display: none; animation: fadeIn 0.3s ease;
+        }
+        .canjear-result.success { background: rgba(0,184,148,0.15); border: 1.5px solid var(--success); }
+        .canjear-result.error { background: rgba(225,112,85,0.15); border: 1.5px solid var(--danger); }
+        .canjear-result .res-title { font-weight: 800; font-size: 1rem; }
+        .canjear-result .res-detail { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 4px; }
+
+        /* OFERTAS */
+        .oferta-item { border: 1.5px solid #eef0f7; border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; transition: all 0.2s; }
+        .oferta-item:hover { border-color: var(--primary); }
+        .oferta-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: #eef0ff; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.4rem; flex-shrink: 0; }
+        .time-chip { font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+
+        /* PEDIDOS */
+        .pedido-item { border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; border-left: 4px solid; }
+        .pedido-item.pendiente { background: #fffbf0; border-color: var(--warning); }
+        .pedido-item.en_progreso { background: #f0f7ff; border-color: var(--primary); }
+        .pedido-item.completado { background: #f0fff8; border-color: var(--success); }
+        .pedido-item.cancelado { background: #fff5f5; border-color: var(--danger); }
+
+        /* PRODUCTOS */
+        .producto-item { border: 1.5px solid #eef0f7; border-radius: 14px; overflow: hidden; transition: all 0.2s; }
+        .producto-item:hover { border-color: var(--primary); box-shadow: 0 4px 16px rgba(102,126,234,0.1); }
+        .producto-item.no-disp { opacity: 0.55; }
+
+        /* TABS */
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* EMPTY */
+        .empty-state { text-align: center; padding: 48px 20px; color: #ccc; }
+        .empty-state i { font-size: 2.8rem; margin-bottom: 12px; display: block; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* BUTTONS */
+        .btn-primary-grad { background: linear-gradient(135deg, var(--primary), var(--primary2)); border: none; color: white; font-weight: 700; border-radius: 10px; padding: 8px 18px; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; }
+        .btn-primary-grad:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(102,126,234,0.35); color: white; }
+
+        /* MOBILE */
+        .hamburger { display: none; background: none; border: none; font-size: 1.4rem; color: var(--dark); cursor: pointer; }
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .hamburger { display: block; }
+            .content { padding: 20px 16px; }
+            .topbar { padding: 14px 16px; }
+            .code-input-group { flex-wrap: wrap; }
+        }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+        .overlay.show { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <div class="avatar"><i class="fas fa-store"></i></div>
+        <div class="biz-name">{{ negocio.nombre }}</div>
+        <div class="biz-cat"><i class="fas fa-tag me-1"></i>{{ negocio.categoria }}</div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08)">
+            <img src="{{ url_for('static', filename='zuppon logo.png') }}" style="height:24px;vertical-align:middle;margin-right:6px">
+            <span style="color:rgba(255,255,255,0.5);font-size:0.78rem;font-weight:700">ZupponPy</span>
+        </div>
+    </div>
+
+    <div class="nav-section">Principal</div>
+    <button class="nav-item active" onclick="showTab(this,'dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</button>
+    <button class="nav-item" onclick="showTab(this,'canjear')"><i class="fas fa-qrcode"></i> Canjear Cupón <span class="badge-count" id="badgeCupones">0</span></button>
+    <button class="nav-item" onclick="showTab(this,'cupones')"><i class="fas fa-ticket-alt"></i> Cupones</button>
+
+    <div class="nav-section">Gestión</div>
+    <button class="nav-item" onclick="showTab(this,'ofertas')"><i class="fas fa-tags"></i> Mis Ofertas</button>
+    <button class="nav-item" onclick="showTab(this,'pedidos')"><i class="fas fa-shopping-cart"></i> Pedidos <span class="badge-count" id="badgePedidos" style="display:none">0</span></button>
+    <button class="nav-item" onclick="showTab(this,'productos')"><i class="fas fa-box"></i> Productos</button>
+
+    <div class="nav-section">Cuenta</div>
+    <button class="nav-item" onclick="showTab(this,'info')"><i class="fas fa-building"></i> Mi Negocio</button>
+    <button class="nav-item" onclick="showTab(this,'seguridad')"><i class="fas fa-lock"></i> Seguridad</button>
+
+    <div class="sidebar-footer">
+        <a href="/negocio/{{ negocio.id }}" target="_blank" class="nav-item" style="text-decoration:none;display:flex"><i class="fas fa-eye"></i> Ver página</a>
+        <a href="/logout" class="nav-item" style="text-decoration:none;display:flex;color:rgba(255,100,100,0.8)"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+    <div class="topbar">
+        <div>
+            <button class="hamburger me-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+            <span class="topbar-title" id="topbarTitle">Dashboard</span>
+            <div class="topbar-sub" id="topbarSub">Resumen general</div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-muted small d-none d-md-block"><i class="fas fa-user me-1"></i>{{ negocio.usuario }}</span>
+            <a href="/" class="btn btn-sm btn-outline-secondary"><i class="fas fa-home"></i></a>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- ═══ DASHBOARD ═══ -->
+        <div id="tab-dashboard" class="tab-pane active">
+            <div class="stat-grid">
+                <div class="stat-card" style="--accent:#667eea;--icon-bg:#eef0ff">
+                    <div class="icon"><i class="fas fa-ticket-alt"></i></div>
+                    <div class="num" id="statCupones">—</div>
+                    <div class="lbl">Cupones activos</div>
+                </div>
+                <div class="stat-card" style="--accent:#00b894;--icon-bg:#e8fff8">
+                    <div class="icon"><i class="fas fa-check-double"></i></div>
+                    <div class="num" id="statCanjeados">—</div>
+                    <div class="lbl">Canjeados hoy</div>
+                </div>
+                <div class="stat-card" style="--accent:#fdcb6e;--icon-bg:#fffbf0">
+                    <div class="icon"><i class="fas fa-inbox"></i></div>
+                    <div class="num" id="statPedidos">—</div>
+                    <div class="lbl">Pedidos pendientes</div>
+                </div>
+                <div class="stat-card" style="--accent:#a29bfe;--icon-bg:#f0eeff">
+                    <div class="icon"><i class="fas fa-eye"></i></div>
+                    <div class="num" id="statVisitasHoy">—</div>
+                    <div class="lbl">Visitas hoy</div>
+                </div>
+                <div class="stat-card" style="--accent:#fd79a8;--icon-bg:#fff0f6">
+                    <div class="icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="num" id="statVisitasSemana">—</div>
+                    <div class="lbl">Esta semana</div>
+                </div>
+                <div class="stat-card" style="--accent:#e17055;--icon-bg:#fff5f5">
+                    <div class="icon"><i class="fas fa-star"></i></div>
+                    <div class="num">{{ negocio.rating }}</div>
+                    <div class="lbl">Rating · {{ negocio.reviews }} reseñas</div>
+                </div>
+            </div>
+
+            <!-- Últimos cupones -->
+            <div class="panel-card mb-4">
+                <div class="panel-card-header">
+                    <h5><i class="fas fa-ticket-alt" style="color:var(--primary)"></i> Últimos cupones reclamados</h5>
+                    <button class="btn-primary-grad btn" onclick="showTab(document.querySelector('[onclick*=cupones]'),'cupones')">Ver todos</button>
+                </div>
+                <div class="panel-card-body" id="dashCupones">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando...</p></div>
+                </div>
+            </div>
+
+            <!-- Últimos pedidos -->
+            <div class="panel-card">
+                <div class="panel-card-header">
+                    <h5><i class="fas fa-shopping-cart" style="color:var(--primary)"></i> Pedidos recientes</h5>
+                    <button class="btn-primary-grad btn" onclick="showTab(document.querySelectorAll('.nav-item')[5],'pedidos')">Ver todos</button>
+                </div>
+                <div class="panel-card-body" id="dashPedidos">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando...</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ CANJEAR CUPÓN ═══ -->
+        <div id="tab-canjear" class="tab-pane">
+            <div class="canjear-panel">
+                <h5><i class="fas fa-qrcode me-2"></i>Validar y Canjear Cupón</h5>
+                <p>Ingresá el código manualmente o escaneá el QR del cliente para validar y canjear el cupón.</p>
+                <div class="code-input-group">
+                    <input type="text" class="code-input" id="codigoInput" placeholder="Ej: A3F2B1C9" maxlength="8" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')validarCodigo()">
+                    <button class="btn-canjear-main" onclick="validarCodigo()"><i class="fas fa-search me-2"></i>Validar</button>
+                    <label class="btn-scan" style="cursor:pointer;display:inline-flex;align-items:center">
+                        <i class="fas fa-camera me-2"></i>Escanear QR
+                        <input type="file" id="qrFileInput" accept="image/*" capture="environment" style="display:none" onchange="escanearQRDesdeImagen(this)">
+                    </label>
+                </div>
+                <canvas id="qrCanvas" style="display:none"></canvas>
+                <div class="canjear-result" id="canjearResult">
+                    <div class="res-title" id="resTitle"></div>
+                    <div class="res-detail" id="resDetail"></div>
+                    <div id="resActions" class="mt-3"></div>
+                </div>
+            </div>
+
+            <!-- Historial de canjes de hoy -->
+            <div class="panel-card">
+                <div class="panel-card-header">
+                    <h5><i class="fas fa-history" style="color:var(--primary)"></i> Canjes de hoy</h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="cargarCupones()"><i class="fas fa-sync me-1"></i>Actualizar</button>
+                </div>
+                <div class="panel-card-body" id="canjesHoy">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando...</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ CUPONES ═══ -->
+        <div id="tab-cupones" class="tab-pane">
+            <div class="panel-card">
+                <div class="panel-card-header">
+                    <h5><i class="fas fa-ticket-alt" style="color:var(--primary)"></i> Todos los cupones</h5>
+                    <div class="d-flex gap-2">
+                        <select id="filtroCupon" class="form-select form-select-sm" style="width:140px" onchange="renderCupones()">
+                            <option value="todos">Todos</option>
+                            <option value="activo">Activos</option>
+                            <option value="canjeado">Canjeados</option>
+                            <option value="expirado">Expirados</option>
+                        </select>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="cargarCupones()"><i class="fas fa-sync"></i></button>
+                    </div>
+                </div>
+                <div class="panel-card-body" id="cuponesContainer">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando...</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ OFERTAS ═══ -->
+        <div id="tab-ofertas" class="tab-pane">
+            <div class="panel-card">
+                <div class="panel-card-header">
+                    <h5><i class="fas fa-tags" style="color:var(--primary)"></i> Mis Ofertas</h5>
+                    <button class="btn-primary-grad btn" onclick="abrirModalOferta()"><i class="fas fa-plus me-1"></i>Nueva Oferta</button>
+                </div>
+                <div class="panel-card-body" id="ofertasContainer">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando...</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PEDIDOS ═══ -->
+        <div id="tab-pedidos" class="tab-pane">
+            <div class="panel-card">
+                <div class="panel-card-header">
+                    <h5><i class="fas fa-shopping-cart" style="color:var(--primary)"></i> Pedidos</h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="cargarPedidos()"><i class="fas fa-sync me-1"></i>Actualizar</button>
+                </div>
+                <div class="panel-card-body" id="pedidosContainer">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando...</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PRODUCTOS ═══ -->
+        <div id="tab-productos" class="tab-pane">
+            <div class="panel-card">
+                <div class="panel-card-header">
+                    <h5><i class="fas fa-box" style="color:var(--primary)"></i> Productos</h5>
+                    <button class="btn-primary-grad btn" onclick="abrirModalProducto()"><i class="fas fa-plus me-1"></i>Agregar</button>
+                </div>
+                <div class="panel-card-body">
+                    <div class="d-flex gap-2 mb-3 flex-wrap">
+                        <input type="text" id="buscarProducto" class="form-control form-control-sm" placeholder="Buscar..." style="max-width:200px" oninput="filtrarProductos()">
+                        <select id="filtroCategoria" class="form-select form-select-sm" style="max-width:180px" onchange="filtrarProductos()">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                    </div>
+                    <div id="productosGrid" class="row g-3">
+                        <div class="col-12 empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando...</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ INFO ═══ -->
+        <div id="tab-info" class="tab-pane">
+            <div class="panel-card">
+                <div class="panel-card-header"><h5><i class="fas fa-building" style="color:var(--primary)"></i> Información del Negocio</h5></div>
+                <div class="panel-card-body">
+                    <div class="row g-3">
+                        {% set fields = [('Categoría','fas fa-tag',negocio.categoria),('Teléfono','fas fa-phone',negocio.telefono),('WhatsApp','fab fa-whatsapp',negocio.whatsapp),('Dirección','fas fa-map-marker-alt',negocio.direccion),('Horario','fas fa-clock',negocio.horario),('Promoción','fas fa-gift',negocio.promocion),('Descuento','fas fa-percent',negocio.descuento|string + '%'),('Usuario','fas fa-user',negocio.usuario)] %}
+                        {% for label, icon, val in fields %}
+                        <div class="col-md-6">
+                            <div style="background:#f7f8fc;border-radius:12px;padding:14px 16px;border-left:4px solid var(--primary)">
+                                <div style="font-size:0.75rem;color:#999;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px"><i class="{{ icon }} me-1"></i>{{ label }}</div>
+                                <div style="font-weight:600;color:#2d3436">{{ val }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if negocio.descripcion %}
+                        <div class="col-12">
+                            <div style="background:#f7f8fc;border-radius:12px;padding:14px 16px;border-left:4px solid var(--primary)">
+                                <div style="font-size:0.75rem;color:#999;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px"><i class="fas fa-align-left me-1"></i>Descripción</div>
+                                <div style="font-size:0.9rem;color:#555;line-height:1.6">{{ negocio.descripcion }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SEGURIDAD ═══ -->
+        <div id="tab-seguridad" class="tab-pane">
+            <div class="panel-card" style="max-width:480px">
+                <div class="panel-card-header"><h5><i class="fas fa-shield-alt" style="color:var(--primary)"></i> Cambiar Contraseña</h5></div>
+                <div class="panel-card-body">
+                    <form id="formContrasena">
+                        <div class="mb-3"><label class="form-label fw-600">Contraseña Actual</label><input type="password" class="form-control" id="contrasenaActual" required></div>
+                        <div class="mb-3"><label class="form-label fw-600">Nueva Contraseña</label><input type="password" class="form-control" id="contrasenaNueva" required minlength="6"></div>
+                        <div class="mb-3"><label class="form-label fw-600">Confirmar Nueva</label><input type="password" class="form-control" id="contrasenaConfirmar" required></div>
+                        <button type="submit" class="btn-primary-grad btn w-100"><i class="fas fa-save me-2"></i>Actualizar contraseña</button>
+                    </form>
+                    <div id="msgContrasena" class="mt-3" style="display:none"></div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- content -->
+</div><!-- main -->
+
+<!-- MODAL OFERTA -->
+<div class="modal fade" id="modalOferta" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content" style="border-radius:18px;overflow:hidden">
+        <div class="modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none">
+            <h5 class="modal-title fw-bold"><i class="fas fa-tags me-2"></i><span id="tituloModalOferta">Nueva Oferta</span></h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+            <input type="hidden" id="ofertaId">
+            <div class="mb-3"><label class="form-label fw-semibold">Nombre *</label><input type="text" class="form-control" id="ofertaNombre" required></div>
+            <div class="mb-3"><label class="form-label fw-semibold">Descripción</label><textarea class="form-control" id="ofertaDescripcion" rows="2"></textarea></div>
+            <div class="row">
+                <div class="col-6 mb-3"><label class="form-label fw-semibold">Precio Original *</label><input type="text" class="form-control" id="ofertaPrecioOriginal" placeholder="350.000 Gs"></div>
+                <div class="col-6 mb-3"><label class="form-label fw-semibold">Precio Oferta *</label><input type="text" class="form-control" id="ofertaPrecioOferta" placeholder="245.000 Gs"></div>
+            </div>
+            <div class="mb-3"><label class="form-label fw-semibold">URL Imagen</label><input type="url" class="form-control" id="ofertaImagen" placeholder="https://..."></div>
+            <div class="mb-3"><label class="form-label fw-semibold">Duración</label>
+                <select class="form-select" id="ofertaDuracion">
+                    <option value="6">6 horas</option><option value="12">12 horas</option>
+                    <option value="24" selected>1 día</option><option value="48">2 días</option>
+                    <option value="72">3 días</option><option value="168">1 semana</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4">
+            <button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+            <button class="btn-primary-grad btn" onclick="guardarOferta()"><i class="fas fa-save me-1"></i>Guardar</button>
+        </div>
+    </div></div>
+</div>
+
+<!-- MODAL PRODUCTO -->
+<div class="modal fade" id="modalProducto" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content" style="border-radius:18px;overflow:hidden">
+        <div class="modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none">
+            <h5 class="modal-title fw-bold"><i class="fas fa-box me-2"></i><span id="tituloModalProducto">Nuevo Producto</span></h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+            <input type="hidden" id="productoId">
+            <div class="row">
+                <div class="col-md-8 mb-3"><label class="form-label fw-semibold">Nombre *</label><input type="text" class="form-control" id="productoNombre" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label fw-semibold">Categoría</label><input type="text" class="form-control" id="productoCategoria" list="listaCategorias"><datalist id="listaCategorias"></datalist></div>
+            </div>
+            <div class="mb-3"><label class="form-label fw-semibold">Descripción</label><textarea class="form-control" id="productoDescripcion" rows="2"></textarea></div>
+            <div class="row">
+                <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Precio *</label><input type="text" class="form-control" id="productoPrecio" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label fw-semibold">URL Imagen</label><input type="url" class="form-control" id="productoImagen" oninput="previewImg()"></div>
+            </div>
+            <div id="imgPreviewBox" style="display:none;margin-bottom:12px"><img id="imgPreview" src="" style="max-height:120px;border-radius:10px;border:1px solid #eee"></div>
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="productoDisponible" checked><label class="form-check-label" for="productoDisponible">Disponible</label></div>
+            <div id="msgProducto" class="mt-3" style="display:none"></div>
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4">
+            <button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+            <button class="btn-primary-grad btn" onclick="guardarProducto()"><i class="fas fa-save me-1"></i>Guardar</button>
+        </div>
+    </div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+const NEGOCIO_ID = {{ negocio.id }};
+let todosCupones = [], todosProductos = [], todasOfertas = [];
+
+// ── SIDEBAR ───────────────────────────────────────────
+function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('show'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+// ── TABS ──────────────────────────────────────────────
+const tabTitles = { dashboard:'Dashboard', canjear:'Canjear Cupón', cupones:'Cupones', ofertas:'Mis Ofertas', pedidos:'Pedidos', productos:'Productos', info:'Mi Negocio', seguridad:'Seguridad' };
+const tabSubs = { dashboard:'Resumen general', canjear:'Validar y canjear cupones de clientes', cupones:'Historial de cupones reclamados', ofertas:'Gestionar ofertas activas', pedidos:'Pedidos recibidos', productos:'Catálogo de productos', info:'Datos del negocio', seguridad:'Cambiar contraseña' };
+
+function showTab(btn, nombre) {
+    document.querySelectorAll('.tab-pane').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + nombre).classList.add('active');
+    if (btn) btn.classList.add('active');
+    document.getElementById('topbarTitle').textContent = tabTitles[nombre] || nombre;
+    document.getElementById('topbarSub').textContent = tabSubs[nombre] || '';
+    closeSidebar();
+    if (nombre === 'dashboard') { cargarCupones(); cargarPedidos(); }
+    if (nombre === 'canjear') { cargarCupones(); }
+    if (nombre === 'cupones') cargarCupones();
+    if (nombre === 'ofertas') cargarOfertas();
+    if (nombre === 'pedidos') cargarPedidos();
+    if (nombre === 'productos') cargarProductos();
+    if (nombre !== 'canjear' && scannerActive) stopScanner();
+}
+
+// ── INIT ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    cargarCupones();
+    cargarPedidos();
+    setInterval(() => { cargarCupones(); cargarPedidos(); }, 30000);
+});
+
+// ── STATS ─────────────────────────────────────────────
+function actualizarStats() {
+    const ahora = new Date().toISOString().slice(0,19).replace('T',' ');
+    const hoy = new Date().toISOString().slice(0,10);
+    const activos = todosCupones.filter(c => !c.canjeado && c.expira_en.slice(0,19) >= ahora).length;
+    const canjeadosHoy = todosCupones.filter(c => c.canjeado && (c.reclamado_en||'').slice(0,10) === hoy).length;
+    document.getElementById('statCupones').textContent = activos;
+    document.getElementById('statCanjeados').textContent = canjeadosHoy;
+    const badge = document.getElementById('badgeCupones');
+    badge.textContent = activos;
+    badge.style.display = activos > 0 ? 'inline' : 'none';
+    // Cargar visitas
+    fetch(`/api/visitas/${NEGOCIO_ID}`).then(r => r.ok ? r.json() : null).then(v => {
+        if (!v) return;
+        const el1 = document.getElementById('statVisitasHoy');
+        const el2 = document.getElementById('statVisitasSemana');
+        if (el1) el1.textContent = v.hoy;
+        if (el2) el2.textContent = v.semana;
+    }).catch(()=>{});
+}
+</script>
+
+<script>
+// ── CUPONES ───────────────────────────────────────────
+async function cargarCupones() {
+    try {
+        const res = await fetch(`/api/cupones-negocio/${NEGOCIO_ID}`);
+        if (!res.ok) {
+            const err = await res.json().catch(()=>({}));
+            document.getElementById('cuponesContainer').innerHTML = `<div class="alert alert-warning">Error ${res.status}: ${err.error || 'No autorizado'}</div>`;
+            document.getElementById('dashCupones').innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Error al cargar cupones (${res.status})</p></div>`;
+            return;
+        }
+        todosCupones = await res.json();
+        actualizarStats();
+        renderCupones();
+        renderDashCupones();
+        renderCanjesHoy();
+    } catch(e) {
+        console.error(e);
+        document.getElementById('cuponesContainer').innerHTML = `<div class="alert alert-danger">Error de conexión: ${e.message}</div>`;
+    }
+}
+
+function cuponEstado(c) {
+    const ahora = new Date().toISOString().slice(0,19).replace('T',' ');
+    if (c.canjeado) return 'canjeado';
+    if (c.expira_en.slice(0,19) < ahora) return 'expirado';
+    return 'activo';
+}
+
+function cuponHTML(c, compact = false) {
+    const estado = cuponEstado(c);
+    const badges = {
+        activo: '<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.75rem"><span class="status-dot" style="background:#00b894"></span>Activo</span>',
+        canjeado: '<span class="badge" style="background:#e3f2fd;color:#1565c0;font-size:0.75rem"><span class="status-dot" style="background:#2196f3"></span>Canjeado</span>',
+        expirado: '<span class="badge" style="background:#f5f5f5;color:#999;font-size:0.75rem"><span class="status-dot" style="background:#ccc"></span>Expirado</span>'
+    };
+    return `
+    <div class="cupon-item ${estado}">
+        <div class="cupon-code-box">${c.codigo}</div>
+        <div class="cupon-info">
+            <div class="title">${c.oferta_nombre}</div>
+            <div style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border-radius:20px;padding:3px 10px;font-size:0.75rem;font-weight:700;display:inline-flex;align-items:center;gap:5px">
+                    <i class="fas fa-user" style="font-size:0.65rem"></i>${c.usuario_nombre}
+                </span>
+                <span style="font-size:0.78rem;color:#888"><i class="fas fa-calendar-alt me-1"></i>${c.reclamado_en ? c.reclamado_en.slice(0,16) : '-'}</span>
+            </div>
+            <div class="mt-1">
+                ${c.precio_original ? `<span class="cupon-price-orig">${c.precio_original}</span>` : ''}
+                <span class="cupon-price-new">${c.precio_oferta}</span>
+            </div>
+        </div>
+        <div class="d-flex flex-column align-items-end gap-2 flex-shrink-0">
+            ${badges[estado]}
+            <small class="text-muted" style="font-size:0.72rem"><i class="fas fa-clock me-1"></i>Expira ${c.expira_en.slice(0,16)}</small>
+            ${estado === 'activo' ? `<button class="btn btn-sm btn-outline-primary" style="border-radius:8px;font-size:0.78rem" onclick="irACanjear('${c.codigo}')"><i class="fas fa-qrcode me-1"></i>Canjear</button>` : ''}
+        </div>
+    </div>`;
+}
+
+function renderCupones() {
+    const cont = document.getElementById('cuponesContainer');
+    if (!cont) return;
+    const filtro = document.getElementById('filtroCupon').value;
+    const lista = todosCupones.filter(c => filtro === 'todos' || cuponEstado(c) === filtro);
+    if (!lista.length) { cont.innerHTML = `<div class="empty-state"><i class="fas fa-ticket-alt"></i><p>No hay cupones ${filtro !== 'todos' ? 'con este filtro' : 'aún'}</p></div>`; return; }
+    cont.innerHTML = lista.map(c => cuponHTML(c)).join('');
+}
+
+function renderDashCupones() {
+    const cont = document.getElementById('dashCupones');
+    if (!cont) return;
+    const recientes = todosCupones.slice(0, 4);
+    if (!recientes.length) { cont.innerHTML = `<div class="empty-state"><i class="fas fa-ticket-alt"></i><p>Aún no hay cupones reclamados</p></div>`; return; }
+    cont.innerHTML = recientes.map(c => cuponHTML(c)).join('');
+}
+
+function renderCanjesHoy() {
+    const cont = document.getElementById('canjesHoy');
+    if (!cont) return;
+    const hoy = new Date().toISOString().slice(0,10);
+    const lista = todosCupones.filter(c => c.canjeado && (c.reclamado_en||'').slice(0,10) === hoy);
+    if (!lista.length) { cont.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle"></i><p>No hay canjes hoy todavía</p></div>`; return; }
+    cont.innerHTML = lista.map(c => cuponHTML(c)).join('');
+}
+
+async function canjearCupon(id) {
+    if (!confirm('¿Confirmar canje de este cupón?')) return;
+    const res = await fetch(`/api/cupon/${id}/canjear`, {method:'POST'});
+    const data = await res.json();
+    if (data.success) cargarCupones();
+    else alert(data.error || 'Error al canjear');
+}
+
+// Ir a la sección canjear con código precargado
+function irACanjear(codigo) {
+    document.getElementById('codigoInput').value = codigo;
+    showTab(document.querySelector('.nav-item[onclick*="canjear"]'), 'canjear');
+    validarCodigo();
+}
+
+// ── VALIDAR CÓDIGO MANUAL ─────────────────────────────
+async function validarCodigo() {
+    const codigo = document.getElementById('codigoInput').value.trim().toUpperCase();
+    const result = document.getElementById('canjearResult');
+    const resTitle = document.getElementById('resTitle');
+    const resDetail = document.getElementById('resDetail');
+    const resActions = document.getElementById('resActions');
+    if (!codigo) return;
+
+    resTitle.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>Validando...`;
+    resDetail.innerHTML = ''; resActions.innerHTML = '';
+    result.style.display = 'block';
+    result.className = 'canjear-result success';
+
+    try {
+        const res = await fetch(`/api/validar-cupon/${NEGOCIO_ID}/${codigo}`);
+        const data = await res.json();
+        if (data.valido) {
+            const c = data.cupon;
+            const expira = new Date(c.expira_en.replace(' ', 'T'));
+            const reclamado = new Date(c.reclamado_en ? c.reclamado_en.replace(' ', 'T') : null);
+            const ahora = new Date();
+            const diffMs = expira - ahora;
+            const horas = Math.floor(diffMs / 3600000);
+            const minutos = Math.floor((diffMs % 3600000) / 60000);
+            const tiempoRestante = horas > 0 ? `${horas}h ${minutos}m` : `${minutos} minutos`;
+
+            result.className = 'canjear-result success';
+            resTitle.innerHTML = `<i class="fas fa-check-circle me-2" style="color:#00b894"></i>Cupón válido`;
+            resDetail.innerHTML = `
+                <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-ticket-alt me-1"></i>Oferta</div>
+                        <div style="font-weight:700;font-size:0.95rem">${c.oferta_nombre}</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-user me-1"></i>Cliente</div>
+                        <div style="font-weight:700;font-size:0.95rem">${c.usuario_nombre}</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-tag me-1"></i>Precio</div>
+                        <div>
+                            ${c.precio_original ? `<span style="text-decoration:line-through;color:rgba(255,255,255,0.35);font-size:0.82rem;margin-right:6px">${c.precio_original}</span>` : ''}
+                            <span style="font-weight:800;font-size:1.05rem;color:#00b894">${c.precio_oferta}</span>
+                        </div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-clock me-1"></i>Tiempo restante</div>
+                        <div style="font-weight:700;font-size:0.95rem;color:#fdcb6e">${tiempoRestante}</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-calendar-check me-1"></i>Reclamado</div>
+                        <div style="font-weight:600;font-size:0.88rem">${c.reclamado_en ? c.reclamado_en.slice(0,16) : '-'}</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-calendar-times me-1"></i>Expira</div>
+                        <div style="font-weight:600;font-size:0.88rem">${c.expira_en.slice(0,16)}</div>
+                    </div>
+                </div>
+                <div style="margin-top:10px;font-size:0.8rem;color:rgba(255,255,255,0.4)">
+                    <i class="fas fa-exclamation-triangle me-1" style="color:#fdcb6e"></i>
+                    Esta acción es irreversible. El cupón quedará marcado como canjeado.
+                </div>`;
+            result.dataset.cuponId = c.id;
+            resActions.innerHTML = `
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn-canjear-main" id="btnConfirmarCanje" style="flex:1;font-size:1rem;padding:14px">
+                        <i class="fas fa-check me-2"></i>Confirmar Canje
+                    </button>
+                    <button class="btn-scan" id="btnCancelarCanje" style="flex:1">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </button>
+                </div>`;
+            document.getElementById('btnConfirmarCanje').addEventListener('click', ejecutarCanje);
+            document.getElementById('btnCancelarCanje').addEventListener('click', cancelarCanje);
+        } else {
+            result.className = 'canjear-result error';
+            resTitle.innerHTML = `<i class="fas fa-times-circle me-2" style="color:#e17055"></i>${data.mensaje}`;
+            resDetail.innerHTML = ''; resActions.innerHTML = '';
+        }
+    } catch(e) {
+        result.className = 'canjear-result error';
+        resTitle.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i>Error de conexión`;
+        resDetail.innerHTML = ''; resActions.innerHTML = '';
+    }
+}
+
+async function ejecutarCanje() {
+    const result = document.getElementById('canjearResult');
+    const id = result.dataset.cuponId;
+    document.getElementById('btnConfirmarCanje').disabled = true;
+    document.getElementById('btnConfirmarCanje').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Canjeando...';
+
+    const res = await fetch(`/api/cupon/${id}/canjear`, {method:'POST'});
+    const data = await res.json();
+    if (data.success) {
+        result.className = 'canjear-result success';
+        document.getElementById('resTitle').innerHTML = `<i class="fas fa-check-circle me-2" style="color:#00b894;font-size:1.3rem"></i>¡Cupón canjeado!`;
+        document.getElementById('resDetail').innerHTML = `<div style="margin-top:6px;color:rgba(255,255,255,0.7);font-size:0.85rem">El cliente puede mostrar este cupón como comprobante.</div>`;
+        document.getElementById('resActions').innerHTML = `<button class="btn-scan mt-2" onclick="cancelarCanje()"><i class="fas fa-redo me-2"></i>Validar otro cupón</button>`;
+        document.getElementById('codigoInput').value = '';
+        cargarCupones();
+    } else {
+        document.getElementById('resTitle').innerHTML = `<i class="fas fa-times-circle me-2" style="color:#e17055"></i>${data.error || 'Error al canjear'}`;
+        document.getElementById('resActions').innerHTML = '';
+    }
+}
+
+async function canjearPorCodigo(id) { /* no usado */ }
+async function confirmarCanje(id) { /* no usado */ }
+
+function cancelarCanje() {
+    document.getElementById('canjearResult').style.display = 'none';
+    document.getElementById('codigoInput').value = '';
+    document.getElementById('codigoInput').focus();
+}
+
+function nuevoEscaneo() {
+    document.getElementById('canjearResult').style.display = 'none';
+    document.getElementById('codigoInput').value = '';
+    document.getElementById('codigoInput').focus();
+}
+
+// ── QR SCANNER ────────────────────────────────────────
+function escanearQRDesdeImagen(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.getElementById('qrCanvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            input.value = ''; // reset para poder escanear de nuevo
+            if (code) {
+                const match = code.data.match(/CUPON:([A-F0-9]{8})/i);
+                if (match) {
+                    document.getElementById('codigoInput').value = match[1].toUpperCase();
+                    validarCodigo();
+                } else {
+                    mostrarResultadoError('QR no reconocido como cupón válido');
+                }
+            } else {
+                mostrarResultadoError('No se detectó ningún QR en la imagen');
+            }
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function mostrarResultadoError(msg) {
+    const result = document.getElementById('canjearResult');
+    result.style.display = 'block';
+    result.className = 'canjear-result error';
+    document.getElementById('resTitle').innerHTML = `<i class="fas fa-times-circle me-2" style="color:#e17055"></i>${msg}`;
+    document.getElementById('resDetail').innerHTML = '';
+    document.getElementById('resActions').innerHTML = '';
+}
+</script>
+
+<script>
+// ── OFERTAS ───────────────────────────────────────────
+async function cargarOfertas() {
+    const cont = document.getElementById('ofertasContainer');
+    try {
+        const res = await fetch(`/api/ofertas-negocio/${NEGOCIO_ID}`);
+        if (!res.ok) throw new Error();
+        todasOfertas = await res.json();
+        if (!todasOfertas.length) { cont.innerHTML = `<div class="empty-state"><i class="fas fa-tags"></i><p>No tenés ofertas. <a href="#" onclick="abrirModalOferta();return false">Creá una</a></p></div>`; return; }
+        const ahora = new Date();
+        cont.innerHTML = todasOfertas.map(o => {
+            const vence = o.fecha_vencimiento ? new Date(o.fecha_vencimiento) : null;
+            const diff = vence ? vence - ahora : null;
+            let chip = '';
+            if (diff !== null) {
+                if (diff <= 0) chip = '<span class="time-chip" style="background:#f5f5f5;color:#999">Expirada</span>';
+                else { const h = Math.floor(diff/3600000); chip = h > 24 ? `<span class="time-chip" style="background:#e8f5e9;color:#2e7d32">${Math.floor(h/24)}d restantes</span>` : `<span class="time-chip" style="background:#fff8e1;color:#f57f17">${h}h restantes</span>`; }
+            }
+            return `<div class="oferta-item">
+                ${o.imagen ? `<img src="${o.imagen}" class="oferta-img" onerror="this.style.display='none'">` : `<div class="oferta-img"><i class="fas fa-image"></i></div>`}
+                <div class="flex-grow-1">
+                    <div class="fw-bold">${o.nombre}</div>
+                    <div class="text-muted small">${o.descripcion||''}</div>
+                    <div class="mt-1">
+                        ${o.precio_original?`<span class="cupon-price-orig">${o.precio_original}</span>`:''}
+                        <span class="cupon-price-new">${o.precio_oferta}</span>
+                    </div>
+                </div>
+                <div class="d-flex flex-column align-items-end gap-2">
+                    ${chip}
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary" style="border-radius:8px" onclick="editarOferta(${o.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" style="border-radius:8px" onclick="eliminarOferta(${o.id})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) { cont.innerHTML = `<div class="alert alert-danger">Error al cargar ofertas</div>`; }
+}
+
+function abrirModalOferta(o = null) {
+    document.getElementById('ofertaId').value = o ? o.id : '';
+    document.getElementById('tituloModalOferta').textContent = o ? 'Editar Oferta' : 'Nueva Oferta';
+    document.getElementById('ofertaNombre').value = o ? o.nombre : '';
+    document.getElementById('ofertaDescripcion').value = o ? (o.descripcion||'') : '';
+    document.getElementById('ofertaPrecioOriginal').value = o ? o.precio_original : '';
+    document.getElementById('ofertaPrecioOferta').value = o ? o.precio_oferta : '';
+    document.getElementById('ofertaImagen').value = o ? (o.imagen||'') : '';
+    document.getElementById('ofertaDuracion').value = o ? (o.duracion_horas||24) : 24;
+    new bootstrap.Modal(document.getElementById('modalOferta')).show();
+}
+function editarOferta(id) { const o = todasOfertas.find(x=>x.id===id); if(o) abrirModalOferta(o); }
+async function guardarOferta() {
+    const id = document.getElementById('ofertaId').value;
+    const payload = { negocio_id: NEGOCIO_ID, nombre: document.getElementById('ofertaNombre').value, descripcion: document.getElementById('ofertaDescripcion').value, precio_original: document.getElementById('ofertaPrecioOriginal').value, precio_oferta: document.getElementById('ofertaPrecioOferta').value, imagen: document.getElementById('ofertaImagen').value, duracion_horas: document.getElementById('ofertaDuracion').value };
+    const res = await fetch(id ? `/api/oferta/${id}` : '/api/oferta', { method: id?'PUT':'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if (res.ok) { bootstrap.Modal.getInstance(document.getElementById('modalOferta')).hide(); cargarOfertas(); }
+    else alert('Error al guardar oferta');
+}
+async function eliminarOferta(id) {
+    if (!confirm('¿Eliminar esta oferta?')) return;
+    const res = await fetch(`/api/oferta/${id}`, {method:'DELETE'});
+    if (res.ok) cargarOfertas(); else alert('Error al eliminar');
+}
+
+// ── PEDIDOS ───────────────────────────────────────────
+async function cargarPedidos() {
+    const cont = document.getElementById('pedidosContainer');
+    const dashCont = document.getElementById('dashPedidos');
+    try {
+        const res = await fetch(`/api/pedidos/${NEGOCIO_ID}`);
+        if (!res.ok) throw new Error();
+        const pedidos = await res.json();
+        const pend = pedidos.filter(p=>p.estado==='pendiente').length;
+        document.getElementById('statPedidos').textContent = pend;
+        const badge = document.getElementById('badgePedidos');
+        badge.textContent = pend; badge.style.display = pend > 0 ? 'inline' : 'none';
+        const html = pedidos.length ? pedidos.map(p => `
+            <div class="pedido-item ${p.estado}">
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <strong>#${p.id} — ${p.cliente_nombre}</strong>
+                    <span class="badge rounded-pill" style="background:${p.estado==='completado'?'#00b894':p.estado==='en_progreso'?'#667eea':p.estado==='cancelado'?'#e17055':'#fdcb6e'};color:${p.estado==='pendiente'?'#333':'white'}">${p.estado}</span>
+                </div>
+                <p class="mb-2 text-muted small">${p.descripcion}</p>
+                ${p.cliente_telefono?`<small class="text-muted me-3"><i class="fas fa-phone me-1"></i>${p.cliente_telefono}</small>`:''}
+                <small class="text-muted"><i class="fas fa-clock me-1"></i>${(p.fecha_creacion||'').slice(0,16)}</small>
+                <div class="d-flex gap-2 mt-2 flex-wrap">
+                    <button class="btn btn-sm btn-outline-primary" style="border-radius:8px" onclick="cambiarEstado(${p.id},'en_progreso')">Procesando</button>
+                    <button class="btn btn-sm btn-outline-success" style="border-radius:8px" onclick="cambiarEstado(${p.id},'completado')">Completar</button>
+                    <button class="btn btn-sm btn-outline-danger" style="border-radius:8px" onclick="cambiarEstado(${p.id},'cancelado')">Cancelar</button>
+                </div>
+            </div>`).join('') : `<div class="empty-state"><i class="fas fa-inbox"></i><p>No hay pedidos aún</p></div>`;
+        if (cont) cont.innerHTML = html;
+        if (dashCont) dashCont.innerHTML = pedidos.length ? pedidos.slice(0,3).map(p=>`
+            <div class="pedido-item ${p.estado}" style="margin-bottom:8px">
+                <div class="d-flex justify-content-between"><strong>#${p.id} — ${p.cliente_nombre}</strong>
+                <span class="badge" style="background:${p.estado==='completado'?'#00b894':p.estado==='en_progreso'?'#667eea':p.estado==='cancelado'?'#e17055':'#fdcb6e'};color:${p.estado==='pendiente'?'#333':'white'}">${p.estado}</span></div>
+                <p class="mb-0 text-muted small mt-1">${p.descripcion}</p>
+            </div>`).join('') : `<div class="empty-state"><i class="fas fa-inbox"></i><p>No hay pedidos</p></div>`;
+    } catch(e) { if(cont) cont.innerHTML = `<div class="alert alert-danger">Error al cargar pedidos</div>`; }
+}
+async function cambiarEstado(id, estado) {
+    await fetch(`/api/pedido/${id}/estado`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({estado})});
+    cargarPedidos();
+}
+
+// ── PRODUCTOS ─────────────────────────────────────────
+async function cargarProductos() {
+    try {
+        const res = await fetch(`/api/productos/${NEGOCIO_ID}`);
+        if (!res.ok) throw new Error();
+        todosProductos = await res.json();
+        actualizarCategorias(); renderProductos(todosProductos);
+    } catch(e) { document.getElementById('productosGrid').innerHTML = `<div class="col-12 alert alert-danger">Error al cargar</div>`; }
+}
+function actualizarCategorias() {
+    const cats = [...new Set(todosProductos.map(p=>p.categoria).filter(Boolean))];
+    const sel = document.getElementById('filtroCategoria'); const val = sel.value;
+    sel.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c=>`<option value="${c}"${c===val?' selected':''}>${c}</option>`).join('');
+    const dl = document.getElementById('listaCategorias'); if(dl) dl.innerHTML = cats.map(c=>`<option value="${c}">`).join('');
+}
+function filtrarProductos() {
+    const q = document.getElementById('buscarProducto').value.toLowerCase();
+    const cat = document.getElementById('filtroCategoria').value;
+    renderProductos(todosProductos.filter(p => (!q||p.nombre.toLowerCase().includes(q)||(p.descripcion||'').toLowerCase().includes(q))&&(!cat||p.categoria===cat)));
+}
+function renderProductos(lista) {
+    const grid = document.getElementById('productosGrid');
+    if (!lista.length) { grid.innerHTML = `<div class="col-12 empty-state"><i class="fas fa-box-open"></i><p>No hay productos. <a href="#" onclick="abrirModalProducto();return false">Agrega uno</a></p></div>`; return; }
+    grid.innerHTML = lista.map(p=>`
+        <div class="col-sm-6 col-lg-4">
+            <div class="producto-item h-100 ${p.disponible?'':'no-disp'}">
+                ${p.imagen?`<img src="${p.imagen}" style="width:100%;height:140px;object-fit:cover" onerror="this.style.display='none'">`:''}
+                <div class="p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <strong style="font-size:0.95rem">${p.nombre}</strong>
+                        <span class="badge ms-1" style="background:${p.disponible?'#e8f5e9':'#ffebee'};color:${p.disponible?'#2e7d32':'#c62828'};font-size:0.7rem">${p.disponible?'Disponible':'No disp.'}</span>
+                    </div>
+                    ${p.categoria?`<small class="text-muted"><i class="fas fa-tag me-1"></i>${p.categoria}</small><br>`:''}
+                    ${p.descripcion?`<small class="text-muted">${p.descripcion}</small><br>`:''}
+                    <div class="fw-bold mt-2 mb-3" style="color:var(--primary)">${p.precio}</div>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-secondary" style="border-radius:8px" onclick="toggleDisponible(${p.id})" title="${p.disponible?'Ocultar':'Mostrar'}"><i class="fas fa-${p.disponible?'eye-slash':'eye'}"></i></button>
+                        <button class="btn btn-sm btn-warning flex-fill" style="border-radius:8px" onclick="editarProducto(${p.id})"><i class="fas fa-edit me-1"></i>Editar</button>
+                        <button class="btn btn-sm btn-danger" style="border-radius:8px" onclick="eliminarProducto(${p.id})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>`).join('');
+}
+function abrirModalProducto() {
+    ['productoId','productoNombre','productoDescripcion','productoPrecio','productoCategoria','productoImagen'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('productoDisponible').checked=true; document.getElementById('imgPreviewBox').style.display='none';
+    document.getElementById('msgProducto').style.display='none'; document.getElementById('tituloModalProducto').textContent='Nuevo Producto';
+    new bootstrap.Modal(document.getElementById('modalProducto')).show();
+}
+function editarProducto(id) {
+    const p = todosProductos.find(x=>x.id===id); if(!p) return;
+    document.getElementById('productoId').value=p.id; document.getElementById('productoNombre').value=p.nombre;
+    document.getElementById('productoDescripcion').value=p.descripcion||''; document.getElementById('productoPrecio').value=p.precio;
+    document.getElementById('productoCategoria').value=p.categoria||''; document.getElementById('productoImagen').value=p.imagen||'';
+    document.getElementById('productoDisponible').checked=!!p.disponible; document.getElementById('msgProducto').style.display='none';
+    document.getElementById('tituloModalProducto').textContent='Editar Producto';
+    if(p.imagen){document.getElementById('imgPreview').src=p.imagen;document.getElementById('imgPreviewBox').style.display='block';}
+    else document.getElementById('imgPreviewBox').style.display='none';
+    new bootstrap.Modal(document.getElementById('modalProducto')).show();
+}
+function previewImg(){const url=document.getElementById('productoImagen').value;if(url){document.getElementById('imgPreview').src=url;document.getElementById('imgPreviewBox').style.display='block';}else document.getElementById('imgPreviewBox').style.display='none';}
+async function guardarProducto(){
+    const id=document.getElementById('productoId').value; const nombre=document.getElementById('productoNombre').value.trim(); const precio=document.getElementById('productoPrecio').value.trim(); const msg=document.getElementById('msgProducto');
+    if(!nombre||!precio){msg.innerHTML='<div class="alert alert-danger">Nombre y precio son obligatorios</div>';msg.style.display='block';return;}
+    const payload={nombre,descripcion:document.getElementById('productoDescripcion').value,precio,categoria:document.getElementById('productoCategoria').value||'General',imagen:document.getElementById('productoImagen').value,disponible:document.getElementById('productoDisponible').checked};
+    const res=await fetch(id?`/api/producto/${id}`:'/api/producto',{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(res.ok&&data.success){msg.innerHTML=`<div class="alert alert-success">Producto ${id?'actualizado':'creado'}</div>`;msg.style.display='block';setTimeout(()=>{bootstrap.Modal.getInstance(document.getElementById('modalProducto')).hide();cargarProductos();},700);}
+    else{msg.innerHTML=`<div class="alert alert-danger">${data.error||'Error al guardar'}</div>`;msg.style.display='block';}
+}
+async function eliminarProducto(id){if(!confirm('¿Eliminar?'))return;const res=await fetch(`/api/producto/${id}`,{method:'DELETE'});if(res.ok)cargarProductos();else alert('Error');}
+async function toggleDisponible(id){await fetch(`/api/producto/${id}/disponible`,{method:'PUT'});cargarProductos();}
+
+// ── CONTRASEÑA ────────────────────────────────────────
+document.getElementById('formContrasena').addEventListener('submit', async e => {
+    e.preventDefault();
+    const actual=document.getElementById('contrasenaActual').value; const nueva=document.getElementById('contrasenaNueva').value; const confirmar=document.getElementById('contrasenaConfirmar').value; const msg=document.getElementById('msgContrasena');
+    if(nueva!==confirmar){msg.innerHTML='<div class="alert alert-danger">Las contraseñas no coinciden</div>';msg.style.display='block';return;}
+    const res=await fetch('/api/negocio/cambiar-contrasena',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contrasena_actual:actual,contrasena_nueva:nueva})});
+    const data=await res.json();
+    msg.innerHTML=`<div class="alert alert-${data.success?'success':'danger'}">${data.message}</div>`;msg.style.display='block';
+    if(data.success)document.getElementById('formContrasena').reset();
+});
+</script>
+</body>
+</html>
