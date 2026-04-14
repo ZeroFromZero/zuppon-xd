@@ -608,7 +608,7 @@ def get_cupones_negocio(negocio_id):
     c.execute('''
         SELECT c.id, c.codigo, c.oferta_nombre, c.oferta_descripcion,
                c.precio_original, c.precio_oferta, c.reclamado_en, c.expira_en,
-               c.canjeado, u.username as usuario_nombre
+               c.canjeado, c.canjeado_en, u.username as usuario_nombre
         FROM cupones c
         JOIN usuarios u ON c.usuario_id = u.id
         JOIN ofertas o ON c.oferta_id = o.id
@@ -667,7 +667,7 @@ def canjear_cupon(cupon_id):
     if cupon['expira_en'] < ahora:
         conn.close()
         return jsonify({'error': 'Cupón expirado'}), 400
-    c.execute('UPDATE cupones SET canjeado=1 WHERE id=?', (cupon_id,))
+    c.execute('UPDATE cupones SET canjeado=1, canjeado_en=? WHERE id=?', (ahora, cupon_id))
     conn.commit()
     conn.close()
     return jsonify({'success': True})

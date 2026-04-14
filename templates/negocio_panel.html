@@ -565,7 +565,7 @@ function actualizarStats() {
     const ahora = new Date().toISOString().slice(0,19).replace('T',' ');
     const hoy = new Date().toISOString().slice(0,10);
     const activos = todosCupones.filter(c => !c.canjeado && c.expira_en.slice(0,19) >= ahora).length;
-    const canjeadosHoy = todosCupones.filter(c => c.canjeado && (c.reclamado_en||'').slice(0,10) === hoy).length;
+    const canjeadosHoy = todosCupones.filter(c => c.canjeado && (c.canjeado_en||'').slice(0,10) === hoy).length;
     document.getElementById('statCupones').textContent = activos;
     document.getElementById('statCanjeados').textContent = canjeadosHoy;
     const badge = document.getElementById('badgeCupones');
@@ -663,7 +663,7 @@ function renderCanjesHoy() {
     const cont = document.getElementById('canjesHoy');
     if (!cont) return;
     const hoy = new Date().toISOString().slice(0,10);
-    const lista = todosCupones.filter(c => c.canjeado && (c.reclamado_en||'').slice(0,10) === hoy);
+    const lista = todosCupones.filter(c => c.canjeado && (c.canjeado_en||'').slice(0,10) === hoy);
     if (!lista.length) { cont.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle"></i><p>No hay canjes hoy todavía</p></div>`; return; }
     cont.innerHTML = lista.map(c => cuponHTML(c)).join('');
 }

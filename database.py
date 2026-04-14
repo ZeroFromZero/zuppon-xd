@@ -88,6 +88,7 @@ def init_db():
             reclamado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             expira_en TIMESTAMP NOT NULL,
             canjeado INTEGER DEFAULT 0,
+            canjeado_en TIMESTAMP,
             FOREIGN KEY (usuario_id) REFERENCES usuarios (id),
             FOREIGN KEY (oferta_id) REFERENCES ofertas (id)
         )
